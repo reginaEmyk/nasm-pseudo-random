@@ -2,8 +2,7 @@
 %include "asm_io.inc"
 
 section .data
-    format_string dw "%i\n", 10 ; Null terminator and padding byte
-    int_format	    db  "pseudo random int: %i\n", 0
+    int_format	    db  "%i", 10; Null terminator and padding byte
     
 
 section .text
@@ -89,54 +88,25 @@ main: ; _start is in stdlib with printf
 
     inc ecx ;period += 1
 
-; cmp eax, 32769
-;     je hey
-    
     cmp ebp, eax ; if start_state == lfsr 
-    je exit ; then exit loop and print period
+    je print_int ; then exit loop and print period
 
     jmp loop
 
-    print_period:    
-    ; Define format string for printing a decimal number
-    ; TODO PUSH IN REVERSE ORDER
-        ; Call printf, pushing arguments in reverse order: format string, then number   
-        pop edx
+print_int: 
+mov eax, ecx            ; move period into eax
+push ecx              ; push period onto the stack
+push int_format       ; push format string onto the stack
+call printf           ; call printf
 
-        pop edx 
-        pop ecx   
-        push ebp ; <- use 8 bytes of stack space, to align the stack  
-        mov	edi,format_string
-        mov	esi,ecx
-        mov al,0 
-        call printf
-        pop ebp
-
-
-; print_int:
-; 	enter	0,0
-; 	pusha
-; 	pushf
-
-; 	push	ecx
-; 	push	int_format
-; 	call	printf
-;     add esp,8 
-	; pop	ecx
-	; pop	ecx
-
-	; popf
-	; popa
-	; leave
-	; ret
-    
+add esp, 8            ; clean up the stack (2 * 4 bytes)
+mov eax, 1 ; System call number for exit
+mov ebx, 0 ; Exit status (0 for success)
+int 0x80   ; Interrupt for system call
 ; http://pacman128.github.io/static/pcasm-book.pdf
 exit:
-call print_int
-    ; Exit program (syscall for Linux/OSX)
-    mov eax, 1 ; System call number for exit
-    mov ebx, 0 ; Exit status (0 for success)
-    int 0x80   ; Interrupt for system call
-
-; End of program
-
+; call print_inte
+; Exit program (syscall for Linux/OSX)
+mov eax, 1 ; System call number for exit
+mov ebx, 0 ; Exit status (0 for success)
+int 0x80   ; Interrupt for system call
