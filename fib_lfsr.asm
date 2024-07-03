@@ -25,15 +25,17 @@ main: ; _start is in stdlib with printf
         ; Test if EAX is negative
     
     ; start state is the last bit of seed, not 1 as in start_state = 1 << 15 | 1
-    mov eax, 1 << 15 | 1
+    ; mov eax, 1 << 15 | 1
+    shl eax, 15
+    or eax, 1
 
-    test eax, eax  ; Test the sign bit of EAX (equivalent to `and eax, eax`)
-    jns   positive  ; Jump to label 'negative' if EAX is positive
-    js   negative  ; Jump to label 'negative' if EAX is negative ;for legibility but not required
-    negative:
-        imul eax, eax, -1 
-    positive:
-        nop
+    ; test eax, eax  ; Test the sign bit of EAX (equivalent to `and eax, eax`)
+    ; jns   positive  ; Jump to label 'negative' if EAX is positive
+    ; js   negative  ; Jump to label 'negative' if EAX is negative ;for legibility but not required
+    ; negative:
+    ;     imul eax, eax, -1 
+    ; positive:
+    ;     nop
     mov ebx, eax ; start_state is in ebx
 
         ; Code to handle the case where EAX is negative
@@ -93,6 +95,7 @@ main: ; _start is in stdlib with printf
 
     jmp loop
 
+; http://pacman128.github.io/static/pcasm-book.pdf
 print_int: 
 mov eax, ecx            ; move period into eax
 push ecx              ; push period onto the stack
@@ -103,7 +106,7 @@ add esp, 8            ; clean up the stack (2 * 4 bytes)
 mov eax, 1 ; System call number for exit
 mov ebx, 0 ; Exit status (0 for success)
 int 0x80   ; Interrupt for system call
-; http://pacman128.github.io/static/pcasm-book.pdf
+
 exit:
 ; call print_inte
 ; Exit program (syscall for Linux/OSX)
