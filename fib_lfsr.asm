@@ -26,21 +26,13 @@ main: ; _start is in stdlib with printf
     ; start state is the last bit of seed, not 1 as in start_state = 1 << 15 | 1
     ; mov eax, 1 << 15 | 1
 
-    ; loop_RDTSC:
-    ;     RDTSC
-    ;     cmp eax, 1    ; Compare eax with 1
-    ;     jl loop_RDTSC ; Jump to loop_RDTSC if EAX is less than 1 
+    loop_RDTSC:
+        RDTSC
+        cmp eax, 0    ; Compare eax with 1
+        je loop_RDTSC ; Jump to loop_RDTSC if EAX is less than 1 
     
-    mov eax, 1 << 15 | 1
-    ; shr eax, 16
-    ; and eax, 0xFFFF ; 16bit only
-    ; or eax, 1 ; RDTSC << 16 | 1
-
-   
-        ; Code to handle the case where EAX is negative
-;   shr eax, 16  ; Shift right by 16 (might not be portable across architectures)
-; and eax, 0xFFFF  ; 
     ; lfsr = start_state
+    
     mov edx, 0 ; helper
     mov ecx, 0 ; period
     
@@ -65,25 +57,30 @@ main: ; _start is in stdlib with printf
 
 
     
-    shr eax, 7 ;(lfsr >> 7)
-    xor edx, eax ; (lfsr ) ^ (lfsr >> 7)
-    shl eax, 9 ;(lfsr << 9)
-    xor edx, eax ; (lfsr ) ^ (lfsr >> 7) ^ (lfsr << 9)
-    shr eax, 13 ;(lfsr >> 13)
-    xor edx, eax ; (lfsr ) ^ (lfsr >> 7) ^ (lfsr << 9) ^ (lfsr >> 13)
+    shl eax, 13 ;(lfsr << 7)
+    xor edx, eax ; (lfsr ) ^ (lfsr << 7)
+    mov eax, edx ; 
+
+    shr eax, 17 ;(lfsr >> 9)
+    xor edx, eax ; (lfsr ) ^ (lfsr << 7) ^ (lfsr >> 9)
+    mov eax, edx ; 
+
+    shl eax, 5 ;(lfsr << 13)
+    xor edx, eax ; (lfsr ) ^ (lfsr << 7) ^ (lfsr >> 9) ^ (lfsr >> 13)
     mov eax, edx ; lfsr = start_state
 
-    inc ecx ;period += 1
 
-    cmp ebp, eax ; if start_state == lfsr 
+    ; cmp ecx, 0xFFFFFFFF  ; Check if ecx is at its maximum signed value
+    ; je print_int    ; Jump if not equal (no overflow)
+
+    cmp eax, ebp ; if start_state == lfsr 
     je print_int ; then exit loop_lfsr and print period
 
     jmp loop_lfsr
 
 ; http://pacman128.github.io/static/pcasm-book.pdf
 print_int: 
-; mov eax, ecx            ; move period into eax
-push ecx              ; push period onto the stack
+push eax              ; push period onto the stack
 push int_format       ; push format string onto the stack
 call printf           ; call printf
 add esp, 8            ; clean up the stack (2 * 4 bytes)
