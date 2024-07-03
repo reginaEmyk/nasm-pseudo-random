@@ -1,28 +1,21 @@
 ; Fibonacci LFSR from https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+%include "asm_io.inc"
 
 section .data
-    start_state dw 1 ; << 15 | 1 ; dw is 16 bits
-    lfsr dw 0
-    bit dw 0; ; 32 bit cus 
-    period dw 0; the pseudo-random number
-    format_string dw " %d ", 10 ; Null terminator and padding byte
-    seed dw 0
-
+    format_string dw "%i\n", 10 ; Null terminator and padding byte
+    int_format	    db  "pseudo random int: %i\n", 0
+    
 
 section .text
 ; Program entry point
 global main
 extern printf
-extern time
 ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
 
+global main
 main: ; _start is in stdlib with printf 
-    %assign start_state 1 << 15 | 1
-    %assign lfsr start_state
-    %assign period 0
     ; get seed from current time
     
-    ; %assign seed RDTSC
     
     ; start_state is in ebx
     ; lfsr is in aex
@@ -34,6 +27,7 @@ main: ; _start is in stdlib with printf
     
     ; start state is the last bit of seed, not 1 as in start_state = 1 << 15 | 1
     mov eax, 1 << 15 | 1
+
     test eax, eax  ; Test the sign bit of EAX (equivalent to `and eax, eax`)
     jns   positive  ; Jump to label 'negative' if EAX is positive
     js   negative  ; Jump to label 'negative' if EAX is negative ;for legibility but not required
@@ -46,11 +40,13 @@ main: ; _start is in stdlib with printf
         ; Code to handle the case where EAX is negative
 
     ; lfsr = start_state
-    ;mov ebx, eax ; cus eax usually has a greater variance in as seen in debugging
     mov edx, 0 ; bit
     mov ecx, 0 ; period
     push eax ; start state on stack
     mov ebp, esp  
+    ; cmp eax, [ebp]
+    ; je hey
+
     ; lea ebp, [esp]
     mov edx, eax
     mov ebp, eax ; save start state in ebp
@@ -81,7 +77,6 @@ main: ; _start is in stdlib with printf
 ; bit in edx is (lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 12)) & 1
 
 
-
     pop  eax; eax = lfsr, stack: start_state
     push edx; stack: bit, start_state
 
@@ -98,36 +93,46 @@ main: ; _start is in stdlib with printf
 ;     je hey
     
     cmp ebp, eax ; if start_state == lfsr 
-    je print_period ; then exit loop and print period
-
-    cmp eax, 32769; if start_state == lfsr
-    ; je print_period ; then exit loop and print period
-    ; je hey
-
+    je exit ; then exit loop and print period
 
     jmp loop
 
     print_period:    
     ; Define format string for printing a decimal number
     ; TODO PUSH IN REVERSE ORDER
-        ; Call printf, pushing arguments in reverse order: format string, then number        
+        ; Call printf, pushing arguments in reverse order: format string, then number   
+        pop edx
+
+        pop edx 
+        pop ecx   
+        push ebp ; <- use 8 bytes of stack space, to align the stack  
         mov	edi,format_string
-        mov	esi,period
-        mov	eax,0
+        mov	esi,ecx
+        mov al,0 
         call printf
-        add esp, 8 ; Clean up stack (remove pushed arguments)
+        pop ebp
 
-    hey:
-        jmp loop
-    ; Write message to stdout
-	mov eax,4            ; 'write' system call = 4
-	mov ebx,1            ; file descriptor 1 = STDOUT
-	mov ecx,period        ; string to write
-	mov edx,22     ; length of string to write
-    ; call printf
-	int 0x80             ; call the kernel
+
+; print_int:
+; 	enter	0,0
+; 	pusha
+; 	pushf
+
+; 	push	ecx
+; 	push	int_format
+; 	call	printf
+;     add esp,8 
+	; pop	ecx
+	; pop	ecx
+
+	; popf
+	; popa
+	; leave
+	; ret
     
-
+; http://pacman128.github.io/static/pcasm-book.pdf
+exit:
+call print_int
     ; Exit program (syscall for Linux/OSX)
     mov eax, 1 ; System call number for exit
     mov ebx, 0 ; Exit status (0 for success)
