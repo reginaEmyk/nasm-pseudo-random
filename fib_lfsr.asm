@@ -33,11 +33,6 @@ main: ; _start is in stdlib with printf
         ; Test if EAX is negative
     
     ; start state is the last bit of seed, not 1 as in start_state = 1 << 15 | 1
-    shr eax, 15
-    or eax, 1
-    shr edx, 15
-    or edx, 1
-
     mov eax, 1 << 15 | 1
     test eax, eax  ; Test the sign bit of EAX (equivalent to `and eax, eax`)
     jns   positive  ; Jump to label 'negative' if EAX is positive
@@ -55,7 +50,10 @@ main: ; _start is in stdlib with printf
     mov edx, 0 ; bit
     mov ecx, 0 ; period
     push eax ; start state on stack
+    mov ebp, esp  
+    ; lea ebp, [esp]
     mov edx, eax
+    mov ebp, eax ; save start state in ebp
     
 
     ; need eax to b free
@@ -71,29 +69,42 @@ main: ; _start is in stdlib with printf
     ; bit is in edx
     ; period is in ecx
 
-    
+    push eax
+    mov ebx, eax ; start_state in ebx
     shr eax, 1 ;(lfsr >> 1)
     xor edx, eax ;lfsr ^ (lfsr >> 1) 
     shr eax,2 ;(lfsr >> 3)
     xor edx, eax ; lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) 
-    shr eax,9 ;(lfsr >> 3)
-    xor edx, eax ; lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) 
+    shr eax,9 ;(lfsr >> 12)
+    xor edx, eax ; lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 12))
     and edx, 1; (lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 12)) & 1
 ; bit in edx is (lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 12)) & 1
 
-    pop  eax; eax = lfsr, stack: empty
-    push edx; stack: bit
+
+
+    pop  eax; eax = lfsr, stack: start_state
+    push edx; stack: bit, start_state
 
     shr eax, 1 ; (lfsr >> 1)
     shl edx, 15; (bit << 15)
     or eax, edx; (lfsr >> 1) | (bit << 15)
 ;lfsr in eax is lfsr = (lfsr >> 1) | (bit << 15)
 
+    pop edx ; bit in edx, stack: start_state
+
     inc ecx ;period += 1
 
-    cmp ebx, eax ; if start_state == lfsr 
- ;   inc period
+; cmp eax, 32769
+;     je hey
+    
+    cmp ebp, eax ; if start_state == lfsr 
     je print_period ; then exit loop and print period
+
+    cmp eax, 32769; if start_state == lfsr
+    ; je print_period ; then exit loop and print period
+    ; je hey
+
+
     jmp loop
 
     print_period:    
@@ -106,6 +117,8 @@ main: ; _start is in stdlib with printf
         call printf
         add esp, 8 ; Clean up stack (remove pushed arguments)
 
+    hey:
+        jmp loop
     ; Write message to stdout
 	mov eax,4            ; 'write' system call = 4
 	mov ebx,1            ; file descriptor 1 = STDOUT
