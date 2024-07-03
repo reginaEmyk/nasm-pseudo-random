@@ -31,10 +31,13 @@ main: ; _start is in stdlib with printf
         cmp eax, 1    ; Compare eax with 1
         jl loop_RDTSC ; Jump to loop_RDTSC if EAX is less than 1 
     
-    mov eax, 1 << 15 | 1
+    ;mov eax, 1 << 15 | 1
+    shr eax, 16
+    and eax, 0xFFFF ; 16bit only
+    or eax, 1 ; RDTSC << 16 | 1
 
     mov eax, ebx ; start_state is in ebx
-    mov ebx, eax ; start_state is in ebx
+    ;mov ebx, eax ; start_state is in ebx
 
         ; Code to handle the case where EAX is negative
   shr eax, 16  ; Shift right by 16 (might not be portable across architectures)
