@@ -6,10 +6,8 @@ section .data
     
 
 section .text
-; Program entry point
-global main
-extern printf
-; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
+    global main
+    extern printf
 
 global main
 main: ; _start is in stdlib with printf 
@@ -20,33 +18,27 @@ main: ; _start is in stdlib with printf
     ; lfsr is in aex
     ; bit is in edx
     ; period is in ecx
-; loads random seed to eax and edx 32 32
+
+; loads non-0 16bit seed to eax based on clock time
+; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
     loop_seed:
-        RDTSC ; start state is a pseudo random seed from clock time in eax. a val from 0 to 
-        shr eax,16
+        RDTSC 
+        shr eax,16 ;takes too long otherwise
         cmp eax,0
         je loop_seed  
         
     
-    mov ebx, eax ; start_state is in ebx
-
-        ; Code to handle the case where EAX is negative
+    mov ebx, eax ; start_state is constant in ebx
 
     ; lfsr = start_state
     mov edx, 0 ; bit
     mov ecx, 0 ; period
     push eax ; start state on stack
     mov ebp, esp  
-    ; cmp eax, [ebp]
-    ; je hey
-
-    ; lea ebp, [esp]
     mov edx, eax
     mov ebp, eax ; save start state in ebp
     
-
-    ; need eax to b free
-    loop : ; while true
+    loop_lfsr :
     ; taps: 16 15 13 4; feedback polynomial: x^16 + x^15 + x^13 + x^4 + 1
     ; bit (lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 12)) & 1
     ; lfsr (lfsr >> 1) | (bit << 15)
@@ -59,7 +51,7 @@ main: ; _start is in stdlib with printf
     ; period is in ecx
 
     push eax
-    mov ebx, eax ; start_state in ebx
+    mov ebx, eax 
     mov edx, eax
 
     shr eax, 1 ;(lfsr >> 1)
@@ -88,24 +80,19 @@ main: ; _start is in stdlib with printf
     inc ecx ;period += 1
 
     cmp ebp, eax ; if start_state == lfsr 
-    je print_int ; then exit loop and print period
+    je print_int ; prints pseudo random then program is interrupted
 
-    jmp loop
+    jmp loop_lfsr
 
 ; http://pacman128.github.io/static/pcasm-book.pdf
 print_int: 
-push eax              ; push period onto the stack
-push int_format       ; push format string onto the stack
-call printf           ; call printf
-
-add esp, 8            ; clean up the stack (2 * 4 bytes)
-mov eax, 1 ; System call number for exit
-mov ebx, 0 ; Exit status (0 for success)
-int 0x80   ; Interrupt for system call
+    push eax              ; push period onto the stack
+    push int_format       ; push format string onto the stack
+    call printf           ; call printf
+    add esp, 8            ; clean up the stack (2 * 4 bytes)
 
 exit:
-; call print_inte
-; Exit program (syscall for Linux/OSX)
-mov eax, 1 ; System call number for exit
-mov ebx, 0 ; Exit status (0 for success)
-int 0x80   ; Interrupt for system call
+    mov eax, 1 ; System call number for exit
+    mov ebx, 0 ; Exit status (0 for success)
+    int 0x80   ; Interrupt for system call
+
