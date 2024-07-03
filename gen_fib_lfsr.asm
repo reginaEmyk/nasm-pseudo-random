@@ -1,4 +1,8 @@
 ; Fibonacci LFSR from https://en.wikipedia.org/wiki/Linear-feedback_shift_register#Example_in_Python
+; Alteração: roda loop por 'lower 32 bits of seed vezes' (valor maior que 1), ao invés de quando lfsr == start_state:
+; Pq lfsr == start_state dava sempre o mesmo count (ecx)
+; printa lfsr ao invés de count
+
 section .data
     int_format	    db  "%i", 10; Null terminator and padding byte
     
@@ -20,19 +24,23 @@ main: ; _start is in stdlib with printf
 ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
     loop_seed:
         RDTSC 
-        shr eax,16 ;takes too long with 32 bits, wikipedia source uses 16 bits
+        shr eax,16 ;takes too long otherwise
         cmp eax,0
         je loop_seed  
+        cmp edx, 0
+        jle loop_seed
         
     
     mov ebx, eax ; start_state is constant in ebx
+    mov ebp, edx
 
     ; lfsr = start_state
     mov edx, 0 ; bit
     mov ecx, 0 ; period
-    push eax ; stack: start_state 
+    push eax ; stack: start_state
+    ; mov ebp, esp  
     mov edx, eax
-    mov ebp, eax ; save start state in ebp
+    ; mov ebp, eax ; save start state in ebp
     
     loop_lfsr :
     ; taps: 16 15 13 4; feedback polynomial: x^16 + x^15 + x^13 + x^4 + 1
@@ -75,7 +83,7 @@ main: ; _start is in stdlib with printf
 
     inc ecx ;period += 1
 
-    cmp ebp, eax ; if start_state == lfsr 
+    cmp ebp, ecx ; if start_state == lfsr 
     je print_int ; prints pseudo random then program is interrupted
 
     jmp loop_lfsr
