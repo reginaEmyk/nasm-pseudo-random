@@ -1,14 +1,19 @@
 ; Fibonacci LFSR from https://en.wikipedia.org/wiki/Linear-feedback_shift_register#Example_in_Python
 section .data
     int_format	    db  "%i", 10; Null terminator and padding byte
-    
+    starting_bit 24; 24th bit
+    BIT_MASK_24 0x800000; 2^24 in hex
+    BIT_MASK_23 0x400000; 2^23 in hex
+    BIT_MASK_21 0x100000; 2^21 in hex
+    BIT_MASK_20 0x50000; 2^20 in hex 
+
 
 section .text
-    global main
+    global lfsr
     extern printf
 
-global main
-main: ; _start is in stdlib with printf 
+global lfsr
+lfsr: ; _start is in stdlib with printf 
     ; get seed from current time
     
     ; start_state is in ebx
@@ -20,12 +25,57 @@ main: ; _start is in stdlib with printf
 ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
     loop_seed:
         RDTSC 
-        shr eax,16 ;takes too long with 32 bits, wikipedia source uses 16 bits
-        cmp eax,0
+        shr eax,8 ; 24 bits
+        cmp eax,0 ; seed 0 garantees 0 output so we'll avoid it
         je loop_seed  
         
-    
+    push eax ; stack: start_state
     mov ebx, eax ; start_state is constant in ebx
+
+    ; push TAP bit 24, 23, 21, 20) to stack
+
+get_polynomial:
+    ; lfsr must be in eax
+    
+
+get_ith_bit:
+; edx has a decimal, the i position for the ith bit 
+; eax has a number
+shr eax, edx;   ; shift eax right by i bits
+push eax;
+
+    get_bit_and_xor: 
+        pop edx ; get TAP bit
+        and eax, edx ; keeps 24th bit and zeroes all others
+        xor eax,edx ;xor lfsr with bit
+    ; todo test above
+
+; push TAP bits to stack
+    load_TAP_to_stack:
+        pop edx
+        ; eax must be correct bit!!!
+        and eax, edx ; keeps ith bit and zeroes all others
+        ; sould load 
+        push eax
+       
+         
+
+
+; todo ensure the hex to bit position is correct
+    push 800000 ; 2^24 in hex
+    call get_bit_and_xor
+    push 400000 ; 2^23 in hex
+    call get_bit_and_xor
+    push 100000 ; 2^21 in hex
+    call get_bit_and_xor
+    push 50000 ; 2^20 in hex
+    call get_bit_and_xor
+; TAP is in eax
+
+
+; lfsr has been shifted in eax by TAP bit 24, 23, 21, 20)
+
+
 
     ; lfsr = start_state
     mov edx, 0 ; bit
