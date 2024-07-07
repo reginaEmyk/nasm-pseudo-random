@@ -1,12 +1,9 @@
 ; Fibonacci LFSR from https://en.wikipedia.org/wiki/Linear-feedback_shift_register#Example_in_Python
 section .data
     int_format	    db  "%i", 10; Null terminator and padding byte
-    starting_bit 23; 24th bit
-    BIT_MASK_24 0x800000; 2^24 in hex
-    BIT_MASK_23 0x400000; 2^23 in hex
-    BIT_MASK_21 0x100000; 2^21 in hex
-    BIT_MASK_20 0x50000; 2^20 in hex 
-
+    %assign _STARTING_BIT 0x800000; only the last 24 bits are 
+    %assign _24_BITS 0xFFFFFF; only the last 24 bits are 1
+    %assign _BIT_MASK_TAPS 0xD80000 ; mask where only TAPS are one (24,23,21,20)
 
 section .text
     global lfsr
@@ -22,7 +19,7 @@ lfsr: ; _start is in stdlib with printf
     ; period is in ecx
 
 
-     %assign STARTING_BIT 23; 24th bit
+    ;  %assign 24_BITS 23; 24th bit
 ; loads non-0 16bit seed to eax based on clock time
 ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
     loop_seed:
@@ -30,75 +27,126 @@ lfsr: ; _start is in stdlib with printf
         shr eax,8 ; 24 bits
         cmp eax,0 ; seed 0 garantees 0 output so we'll avoid it
         je loop_seed  
+    ; mov eax, 0
+    push eax 
+    mov ebp, esp
+    
+
+
+call get_bit_and_xor
+mov eax, 13579135 ;1,0 
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+mov eax, 24680246 ;1, 0
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+mov eax, 31415926 ;0, 2^23
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+mov eax, 27182818 ; 1
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+mov eax, 11235813 ; 0
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+mov eax, 16180339 ;1
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+mov eax, 14142135
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+mov eax, 17320508
+
+    push eax 
+    mov ebp, esp
+call get_bit_and_xor
+
+    call get_bit_and_xor
     mov ebp, eax
     push ebp ; stack: start_state
     mov ebx, [ebp] ; start_state is constant in ebx
 
-    ;  get TAP with bits  24, 23, 21, 20)
-get_polynomial: ;for 24,23,21,20th bits only
-    ; lfsr must be in eax
-    push eax
-    mov edx, eax
-    and edx, BIT_MASK_24
-    shr 23;
-    and eax, BIT_MASK_23
-    shr 22;
-    xor eax, edx ; 24th xor 23rd
-    
-    mov edx, esp
-    and edx, BIT_MASK_21
-    shr 20;
-    xor eax, edx
-    mov edx, esp
-    and edx, BIT_MASK_20
-    shr 19
-    xor eax, edx
-    ret ; polynomial is in edx
 
 
-
-get_bit:
-       ; stack must have: 1st, the amount of args, 2nd: each arg
-       ; ecx must hav amount of args
-       ; eax must hav a bit to xor to
-       ; stack must hav each arg, from top to bottom
-       ; esp must have an int to shift left eax to, in order to compare it to edx
-       ; ebs must have seed
-       mov eax, [ebx]
-       pop ecx ; amount of args
-       loop_xor:
-        
-        dec ecx
-        cmp ecx,0
-        jg loop_xor
-       
 get_bit_and_xor:
-    mov eax, ebp
-    shr eax, esp
-    pop
-    xor eax, edx
-    mov edx, eax
+; shifts lfsr in edx so 23rd bit is the bit to perform xor on the 23rd bit of lfsr in eax
+    mov edx, eax; eax has lfsr ; todo get from ebp
+    shl edx, 1 ; 23ith bit: original 22nd bit
+    xor eax, edx ; 23ith bit xor 22nd
+    shl edx, 2  ; 23ith bit: original 20th bit
+    xor eax, edx; 23ith bit xor 22nd xor 20th
+    shl edx, 1 ; 23ith bit: original 19th bit
+    xor eax, edx ; 23ith bit xor 22nd xor 20th xor 19th
+    xor eax, _STARTING_BIT; 23ith bit xor 22nd xor 20th xor 19th xor 1
+    and eax, _STARTING_BIT ; only the 23ith bit can be 1, to push into lfsr later
+    retn  ; 23ith bit in eax is polynomial for TAP 23,22, 20,19 (0 index)
 
-; todo ensure the hex to bit position is correct
-    mov edx, 0  
-    push 24 - 1 ; 2^24 in hex
-    call get_bit_and_xor
-    push 23 - 1 ; 2^23 in hex
-    call get_bit_and_xor
-    push 21 - 1 ; 2^21 in hex
-    call get_bit_and_xor
-    push 20 - 1 ; 2^20 in hex
-    call get_bit_and_xor
-    shl edx, 23; to push polynomial to lfsr 1st bit
-; TAP is in eax
 
-; got polynomial above
+; oget_bit_and_xor:
+;     mov edx, 0
+;     mov eax, [ebp]
+;     and eax, BIT_MASK_23
+;     shl eax, 22
+;     mov edx, eax ; gets 24th bit
 
-; push polynomial to lfsr
-    shr [ebp], 1
-    xor ebp, edx ; shifted and added TAP
+;     mov eax, [ebp]
+;     and eax, BIT_MASK_22
+;     shl eax, 23 - 1
+;     xor edx, eax ; 24th xor 23rd
 
-    ret ebp
+;     mov eax, [ebp]
+;     and eax, BIT_MASK_20
+;     shl eax, 21 - 2
+;     xor edx, eax ; 21 xor (24th xor 23rd)
+
+;     mov eax, [ebp]
+;     and eax, BIT_MASK_19
+;     shl eax, 20 - 1
+;     xor edx, eax; 20th xor (21 xor (24th xor 23rd))
+
+;     push edx
+;      ret ; polynomial is in edx and top of stack
+
+
+    ;  get TAP with bits  24, 23, 21, 20)
+; get_polynomial: ;for 24,23,21,20th bits only
+;     ; lfsr must be in eax
+;     push eax
+;     mov edx, eax
+;     and edx, BIT_MASK_24
+;     shr 23;
+;     and eax, BIT_MASK_23
+;     shr 22;
+;     xor eax, edx ; 24th xor 23rd
+    
+;     mov edx, esp
+;     and edx, BIT_MASK_21
+;     shr 20;
+;     xor eax, edx
+;     mov edx, esp
+;     and edx, BIT_MASK_20
+;     shr 19
+;     xor eax, edx
+;     ret ; polynomial is in edx
+
+
+
+
+
 
 
 ; lfsr has been shifted in eax by TAP bit 24, 23, 21, 20)
