@@ -29,6 +29,7 @@ push eax ; to pop to edx later
 loop_shift_until_equal:
     call get_bit_and_xor ; puts polynomial in eax, eax must have lfsr
     pop edx ; resets lfsr to edx (was left shifted in get_bit_and_xor)
+    and edx, _24_BITS
     shr edx, 1 ; shift lfsr by 1
     or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in get_bit_and_xor
     inc ecx
@@ -82,19 +83,21 @@ push ecx
 ;     mov ebp, esp
 ; call get_bit_and_xor
 
-
+; 24 23 21 20
 get_bit_and_xor:
 ; shifts lfsr in edx so 23rd bit is the bit to perform xor on the 23rd bit of lfsr in eax
     mov edx, eax; eax has lfsr ; 
     and edx, _BIT_MASK_TAPS ; 
-    shl edx, 1 ; 24th bit: original 23rd bit
+    shr edx, 1 ; 24th bit: original 23rd bit
     xor eax, edx ; 24th bit xor 23rd
-    shl edx, 2  ; 24th bit: original 21st bit
+    shr edx, 2  ; 24th bit: original 21st bit
     xor eax, edx; 24th bit xor 23rd xor 21st
-    shl edx, 1 ; 24th bit: original 20th bit
+    shr edx, 1 ; 24th bit: original 20th bit
     xor eax, edx ; 24th bit xor 23rd xor 21st xor 20th
     ; shl edx, 19; 24th bit : original 0 bit
-    and eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th and 1
+    shl eax, 23
+     and eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th and 1
+    
     ; xor eax, edx 
     ; xor eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th xor 1ste
     ; and eax, _STARTING_BIT ; only the 24th bit can be 1, to push into lfsr later
@@ -104,7 +107,7 @@ get_bit_and_xor:
 
 ; http://pacman128.github.io/static/pcasm-book.pdf
 print_int:
-    push ebx              ; push period onto the stack
+    push ecx              ; push period onto the stack
     push int_format       ; push format string onto the stack
     call printf           ; call printf
     add esp, 8            ; clean up the stack (2 * 4 bytes)
