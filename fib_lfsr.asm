@@ -3,7 +3,7 @@ section .data
     int_format	    db  "%i", 10; Null terminator and padding byte
     %assign _STARTING_BIT 0x800000; only the last 24 bits are 
     %assign _24_BITS 0xFFFFFF; only the last 24 bits are 1
-    %assign _BIT_MASK_TAPS 0xD80000 ; mask where only TAPS are one (24,7,21) 
+    %assign _BIT_MASK_TAPS 0xD80000 ; mask where only TAPS are one (24,22,21,20) 
 
 section .text
     global lfsr
@@ -19,21 +19,20 @@ _lfsr: ; _start is in stdlib with printf
         shr eax,8 ; 24 bits
         cmp eax,0 ; seed 0 garantees 0 output so we'll avoid it
         je loop_seed  
-; mov eax, 0
+ mov eax, 6029786
 and eax, _24_BITS ; ensures seed has max 24 bits
 mov edx, eax
 mov ecx,0
-push eax ; lfsr
+push eax ; starts stack: lfsr
 mov ebp, esp ; starts stack: lfsr
-; push eax ; to pop to edx later
+push eax ; to pop to edx later
 loop_shift_until_equal:
-    call get_bit_and_xor ; puts polynomial in eax
-    ; pop edx ; copy lfsr to edx to shift and add polynomial
+    call get_bit_and_xor ; puts polynomial in eax, eax must have lfsr
+    pop edx ; resets lfsr to edx (was left shifted in get_bit_and_xor)
     shr edx, 1 ; shift lfsr by 1
     or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in get_bit_and_xor
     inc ecx
-    
-    ; push edx; push 32 bit polynomial | lfsr << 1  
+    push edx; push lfsr = polynomial | lfsr << 1 , upper 8 bits are 0. polynomial must be 0 except in 24th bit
     mov eax, edx
     cmp eax, [ebp] 
     je print_int
@@ -87,18 +86,19 @@ push ecx
 get_bit_and_xor:
 ; shifts lfsr in edx so 23rd bit is the bit to perform xor on the 23rd bit of lfsr in eax
     mov edx, eax; eax has lfsr ; 
-    shl edx, 1 ; 23ith bit: original 22nd bit
-    xor eax, edx ; 23ith bit xor 22nd
-    shl edx, 2  ; 23ith bit: original 20th bit
-    xor eax, edx; 23ith bit xor 22nd xor 20th
-    shl edx, 1 ; 23ith bit: original 19th bit
-    xor eax, edx ; 23ith bit xor 22nd xor 20th xor 19th
-    xor eax, _STARTING_BIT; 23ith bit xor 22nd xor 20th xor 19th xor 1
-    ; shl edx, 19; 23ith bit : original 0 bit
+    and edx, _BIT_MASK_TAPS ; 
+    shl edx, 1 ; 24th bit: original 23rd bit
+    xor eax, edx ; 24th bit xor 23rd
+    shl edx, 2  ; 24th bit: original 21st bit
+    xor eax, edx; 24th bit xor 23rd xor 21st
+    shl edx, 1 ; 24th bit: original 20th bit
+    xor eax, edx ; 24th bit xor 23rd xor 21st xor 20th
+    ; shl edx, 19; 24th bit : original 0 bit
+    and eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th and 1
     ; xor eax, edx 
-    ; xor eax, _STARTING_BIT; 23ith bit xor 22nd xor 20th xor 19th xor 1ste
-    and eax, _24_BITS ; only the 23ith bit can be 1, to push into lfsr later
-    retn  ; 23ith bit in eax is polynomial for TAP 23,22, 20,19 (0 index)
+    ; xor eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th xor 1ste
+    ; and eax, _STARTING_BIT ; only the 24th bit can be 1, to push into lfsr later
+    retn  ; 24th bit in eax is polynomial for TAP 23,22, 20,19 (0 index)
 ; lfsr has been shifted in eax by polynomial with TAP bit 24, 23, 21, 20)
 
 
