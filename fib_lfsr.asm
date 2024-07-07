@@ -9,8 +9,8 @@ section .text
     global lfsr
     extern printf
 
-global lfsr
-lfsr: ; _start is in stdlib with printf 
+global _lfsr
+_lfsr: ; _start is in stdlib with printf 
     ; get seed from current clock time
     
 ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
@@ -19,61 +19,69 @@ lfsr: ; _start is in stdlib with printf
         shr eax,8 ; 24 bits
         cmp eax,0 ; seed 0 garantees 0 output so we'll avoid it
         je loop_seed  
-
-    push eax 
-    mov ebp, esp ; starts stack: lfsr
-    call get_bit_and_xor
-    mov edx, [ebp] ; copy lfsr to edx to shift and add polynomial
+mov eax, 
+and eax, _24_BITS ; ensures seed has max 24 bits
+mov ecx,0
+push eax ; lfsr
+mov ebp, esp ; starts stack: lfsr
+push eax ; to pop to edx later
+loop_shift_until_equal:
+    call get_bit_and_xor ; puts polynomial in eax
+    pop edx ; copy lfsr to edx to shift and add polynomial
     shr edx, 1 ; shift lfsr by 1
     or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in get_bit_and_xor
+    inc ecx
+    
+    push edx;
+    mov eax, edx
+    mov ebx, ecx
+    cmp eax, [ebp] 
+    je print_int
+    jmp loop_shift_until_equal
 
+push ecx
 
-mov eax, 13579135 ;1,0 
+; ; todo loop it to see ecx
+; mov eax, 13579135 ;1,0 
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-mov eax, 24680246 ;1, 0
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
+; mov eax, 24680246 ;1, 0
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-mov eax, 31415926 ;0, 2^23
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
+; mov eax, 31415926 ;0, 2^23
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-mov eax, 27182818 ; 1
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
+; mov eax, 27182818 ; 1
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-mov eax, 11235813 ; 0
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
+; mov eax, 11235813 ; 0
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-mov eax, 16180339 ;1
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
+; mov eax, 16180339 ;1
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-mov eax, 14142135
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
+; mov eax, 14142135
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-mov eax, 17320508
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
+; mov eax, 17320508
 
-    push eax 
-    mov ebp, esp
-call get_bit_and_xor
-
-    call get_bit_and_xor
-    mov ebp, eax
-    push ebp ; stack: start_state
-    mov ebx, [ebp] ; start_state is constant in ebx
-
+;     push eax 
+;     mov ebp, esp
+; call get_bit_and_xor
 
 
 get_bit_and_xor:
@@ -92,11 +100,12 @@ get_bit_and_xor:
 
 
 ; http://pacman128.github.io/static/pcasm-book.pdf
-print_int: 
-    push eax              ; push period onto the stack
+print_int:
+    push ebx              ; push period onto the stack
     push int_format       ; push format string onto the stack
     call printf           ; call printf
     add esp, 8            ; clean up the stack (2 * 4 bytes)
+    
 
 exit:
     mov eax, 1 ; System call number for exit
