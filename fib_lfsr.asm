@@ -19,7 +19,7 @@ _lfsr: ; _start is in stdlib with printf
         shr eax,8 ; 24 bits
         cmp eax,0 ; seed 0 garantees 0 output so we'll avoid it
         je loop_seed  
-mov eax, 
+mov eax, 0
 and eax, _24_BITS ; ensures seed has max 24 bits
 mov ecx,0
 push eax ; lfsr
@@ -32,7 +32,7 @@ loop_shift_until_equal:
     or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in get_bit_and_xor
     inc ecx
     
-    push edx;
+    push edx; push 32 bit polynomial | lfsr << 1  
     mov eax, edx
     mov ebx, ecx
     cmp eax, [ebp] 
@@ -93,7 +93,7 @@ get_bit_and_xor:
     xor eax, edx; 23ith bit xor 22nd xor 20th
     shl edx, 1 ; 23ith bit: original 19th bit
     xor eax, edx ; 23ith bit xor 22nd xor 20th xor 19th
-    xor eax, _STARTING_BIT; 23ith bit xor 22nd xor 20th xor 19th xor 1
+    ; xor eax, _STARTING_BIT; 23ith bit xor 22nd xor 20th xor 19th xor 1st
     and eax, _STARTING_BIT ; only the 23ith bit can be 1, to push into lfsr later
     retn  ; 23ith bit in eax is polynomial for TAP 23,22, 20,19 (0 index)
 ; lfsr has been shifted in eax by polynomial with TAP bit 24, 23, 21, 20)
