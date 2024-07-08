@@ -15,21 +15,28 @@ nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
 gcc -g -m32 lfsr.c fib_lfsr.o -o lfsr
 gdb ./lfsr 
 
+
+nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
+gcc -g -m32 chi.c fib_lfsr.o -o chi
+gdb ./chi
+
+nasm -g -f elf32 fib_lfsr.asm 
+ gcc -o fib_lfsr fib_lfsr.o chi.c asm_io.o
+
 6029786 20001
-65535
-131070
-000110011 00101111 0011111
+ignore 1 1677721699999
 
-2147483574
+01100100 00010111 01101010
+01011100 00000001 11011010
 
-5457894
-
-ignore 2 16777216
-
+00101110 00000000 11101101
+01000100 00010001 00011110
 
 1448436125
 894746
 16157861
+
+13437803
 
 ![alt text](image-2.png)
 2 5 9 24 
@@ -74,3 +81,10 @@ send POSITION, get bit in stack. d
              1                                                           
 
  24 xor 23 xor 21 xor 20 xor 1 == 01
+
+
+
+
+
+
+./chi &&  ./chi && ./chi &&  ./chi && ./chi &&  ./chi && ./chi &&  ./chi 
