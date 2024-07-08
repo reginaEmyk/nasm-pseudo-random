@@ -1,12 +1,26 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-__int32_t _lfsr();
+__int32_t _lfsr(__int32_t);
 
 int main(){
     // printf("Hello, World!");
-    
-    int i = _lfsr();
-    printf("%i ", i);
+    // 16777216
+    __uint32_t* pseudoRandom = (__uint32_t*)malloc(16777216 * sizeof(__uint32_t));
+    printf("calling 16777215 \n;");
+    for (int i = 0; i < 16777; i++)
+    {
+        if(i==0)
+            pseudoRandom[i] = _lfsr(0);
+        else
+            pseudoRandom[i] = _lfsr(pseudoRandom[i-1]);
+        printf(" %i; ", pseudoRandom[i]);
+    }
+    printf("\n finished printing 16777215");
+
+    //chi square i sum of (realFreq - expFreq)**2/(expFreq)
+   
+
     // todo: make a huge 2^24 -1 vector calling lfsr
     // todo: chi test it
 
