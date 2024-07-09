@@ -2,11 +2,11 @@
 
 ; Fibonacci LFSR from https://en.wikipedia.org/wiki/Linear-feedback_shift_register#Example_in_Python
 section .data
-    %assign _STARTING_BIT 0x800000; only the last 24 bits are 
+    %assign _LAST_BIT_ 0x000001; only the last 24 bits are 
     %assign _24_BITS 0xFFFFFF; only the last 24 bits are 1
-    %assign _BIT_MASK_TAPS 0xE10000 ; mask where only TAPS are one (24,22,21,20) 
-    %assign array_size 16777
-    array times array_size db 0; 
+    %assign _BIT_MASK_TAPS 0x00001B ; mask where only TAPS are one (24,22,21,20) 
+    %assign array_size 16777216
+    _pseudo_randoms_ times array_size dd 0; 
     
 
 ; todo use mask that will pick from first bit so that it won't push out the 1's and leave with no 1 ever again
@@ -24,18 +24,25 @@ section .text
             je _loop_seed  
             ret
 
+    ; get seed from current clock time
+    ; https://www.diva-portal.org/smash/get/diva2:812512/FULLTEXT01.pdf    
+    ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
+    _call_loop_seed:
+        call _loop_seed
+        jmp _gen_lfsr
+
     _get_polynomial:
         mov edx, eax; eax has lfsr ; 
         and edx, _BIT_MASK_TAPS ; 
-        shl edx, 1 ; 24th bit: original 23rd bit
+        shr edx, 1 ; 24th bit: original 23rd bit
         xor eax, edx ; 24th bit xor 23rd
-        shl edx, 1  ; 24th bit: original 21st bit
+        shr edx, 2  ; 24th bit: original 21st bit
         xor eax, edx; 24th bit xor 23rd xor 21st
-        shl edx, 5 ; 24th bit: original 20th bit
+        shr edx, 1 ; 24th bit: original 20th bit
         xor eax, edx ; 24th bit xor 23rd xor 21st xor 20th
-        ; shl edx, 19; 24th bit : original 0 bit
-        ; shl eax, 23
-        and eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th xor 1, to avoid 0
+        and eax, _LAST_BIT_; 24th bit xor 23rd xor 21st xor 20th xor 1, to avoid 0
+        
+        shl eax, 23
         ret
             
     _lfsr: ; _start is in stdlib with printf 
@@ -43,18 +50,12 @@ section .text
     mov  ebp, esp
     mov eax, [esp+8] ; previous stack + 4 for eax
     mov ecx, 0 ; to access array
-
-    ; get seed from current clock time
-    ; https://www.diva-portal.org/smash/get/diva2:812512/FULLTEXT01.pdf    
-    ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
-    _call_loop_seed:
-        call _loop_seed
-        ; todo generate 1M per wewerwer
+        
     cmp eax, 0
-    je _call_loop_seed
+    je _call_loop_seed ; puts clock time in eax and jumps to _gen_lfsr
 
     _gen_lfsr: 
-        push eax
+        push eax ; preserve lfsr in stack
 
    ; shifts lfsr in edx so 23rd bit is the bit to perform xor on the 23rd bit of lfsr in eax
         call _get_polynomial ; puts polynomial in eax, eax must have lfsr
@@ -62,13 +63,15 @@ section .text
         shr edx, 1 ; shift lfsr by 1
         or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in _get_polynomial
     ; lfsr = polynomial | lfsr << 1 , upper 8 bits are 0. polynomial must be 0 except in 24th bit
-        mov [array+ecx], edx ; push pseudo random number to array
+        mov [_pseudo_randoms_ + ecx*4], edx ; push pseudo random number to array
+        mov eax,edx; push lfsr in eax
         inc ecx ; increment counter
-        cmp ecx, array_size
+        cmp ecx, array_size ; loop until all 'array_size' amount of pseudo randoms are pushed to array
         jl _gen_lfsr ; todo jl or jle
 
         ; AL, AX or DX:A
-        mov eax, array
+        lea eax, [_pseudo_randoms_]
+        ; mov [esp+8], eax
         mov esp, ebp
         pop ebp ; restore stack to return to main
         

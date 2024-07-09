@@ -11,6 +11,7 @@
     double const UNIFORM_FREQ =  (double)1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
     double const ALMOST_ZERO_DENOMINATOR = 0.1;
     double const CRITICAL_VALUE = 7.879; // for alpha = 0.05 and df = 1
+    #define SEED 1
 
 // alpha 
 
@@ -34,7 +35,7 @@ int* lfsr_array(int* pseudoRandom, int lfsr);
 int* lfsr_array(int* pseudoRandom, int lfsr){
     int polynomial = -1;
 
-    for (int i = 0; i < array_size-1; i++){
+    for (int i = 0; i < array_size; i++){
         polynomial = get_polynomial(lfsr);
         lfsr = (lfsr >> 1) | polynomial;
 
@@ -137,16 +138,17 @@ int main(){
     double chi_sqr = 0;
     clock_t clock_nasm, clock_c ;  // function execution takes less than a second, must use clock in ANSI C. https://stackoverflow.com/questions/361363/how-to-measure-time-in-milliseconds-using-ansi-c.
     double chiSquare = 0;
+    int areBothEqual = 0;
 
     printf("calling 16777215 \n;");
     clock_nasm = clock();
-    nasmPseudoRandom = _lfsr(1);
+    nasmPseudoRandom = _lfsr(SEED);
     clock_nasm = clock() - clock_nasm;
 
     clock_c = clock();
-    cPseudoRandom = lfsr_array(cPseudoRandom, 1);
+    cPseudoRandom = lfsr_array(cPseudoRandom, SEED);
     clock_c = clock() - clock_c;
-
+// todo fix:   WRONG  index 16777215 nasm is 8388608 c is 0
 // todo test for both arrays
     chiSquare = chiUniformExpected(cPseudoRandom);
     printf("chi_square %f ", chiSquare);
@@ -159,10 +161,15 @@ int main(){
     for (int i = 0; i < array_size; i++)
     {
         if(nasmPseudoRandom[i] != cPseudoRandom[i]){
-            printf(" WRONG  index %i nasm is %f c is %f", i, nasmPseudoRandom[i], cPseudoRandom[i] );
+            printf(" WRONG  index %i nasm is %i c is %i", i, nasmPseudoRandom[i], cPseudoRandom[i] );
+            areBothEqual = 1;
             break;
         } 
     }
+
+    if (areBothEqual == 0)
+        printf("The implementations for c and nasm gave the same resulting array. \n");
+
     
 // todo print arrays
 // todo determine acceptance rejection regions?
