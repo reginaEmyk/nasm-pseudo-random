@@ -8,8 +8,8 @@
     #define array_size 16777216 // 16777215 is the biggest 24bit int
     #define n_classes 16
     int const CLASS_SIZE = array_size/n_classes;
-    double const UNIFORM_FREQ =  1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
-    double const ALMOST_ZERO_DENOMINATOR = 0.000000000000000000000000001;
+    double const UNIFORM_FREQ =  (double)1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
+    double const ALMOST_ZERO_DENOMINATOR = 0.1;
 
 // alpha 
 
@@ -109,13 +109,20 @@ double chi_0_expected(int* pseudoRandom){
             // otherwise exp freq is 0
             pseudo = classes[classIdx][index][0];
             pseudoOcurr = (double)1/classes[classIdx][index][1];
-            if(pseudoOcurr == 0)
-                pseudoOcurr = ALMOST_ZERO_DENOMINATOR;
-            obs_freq = pseudoOcurr;
+
+            // if(pseudoOcurr == 0)
+            //     pseudoOcurr = ALMOST_ZERO_DENOMINATOR;
+
+            // obs_freq = (double)pseudoOcurr/CLASS_SIZE;
+            obs_freq = (double)1/CLASS_SIZE;
+
+
             if(pseudo < class_lowest || pseudo > class_highest) 
-                expected_freq = ALMOST_ZERO_DENOMINATOR; // cant have 0 denominator
+                // expected_freq = ALMOST_ZERO_DENOMINATOR; // cant have 0 denominator
+                expected_freq = UNIFORM_FREQ;
             else
                 expected_freq = UNIFORM_FREQ;
+
 
             chi_sqr += (obs_freq - expected_freq) * (obs_freq - expected_freq) / (expected_freq);
         }
@@ -123,59 +130,10 @@ double chi_0_expected(int* pseudoRandom){
     }
 
 
-//     // put a count of pseudo random's occurences in ocurrences[pseudo random]
-//     // also prints if a pseudo was generated more than once
-//     printf("Pseudo random array has repeated values: ");
-//     for (int i = 0; i < array_size; i++)
-//     {
-//         pseudo = pseudoRandom[i];
-//         occurences[pseudo] += 1;
-//         if(occurences[pseudo] > 1)
-//             printf("%i ", *pseudoRandom);            
-//     }
-//     printf("\n");
-
-// printf("indexes ");
-
-//     for (int MClass = 0; MClass < n_classes; MClass++) // 16 classes
-//     {
-//         for (int index = 0, i = 0; i < array_size/n_classes; i++) // iterate through each class without separating pseudos 
-//         {
-//             index = i + MClass * array_size/n_classes;
-//             if (occurences[index] == 0 ){
-//                 obs_freq = 0;
-//             }
-//             else{                
-//                 obs_freq = (double)occurences[index]/array_size;
-//             }
-//             chi_sqr += (obs_freq - expected_freq) * (obs_freq - expected_freq) / (expected_freq);
-//             // printf(" %i", index);
-//         }
-        
-//     }
-    
 
     return chi_sqr;
 }
 
-
-
-double chi_any_chance(int* pseudoRandom);
-double chi_any_chance(int* pseudoRandom){
-    double chi_sqr = 0;
-
-    for (int i = 0; i < 16; i++) // 16 classes
-    {
-        for (int i = 0; i < array_size/16; i++)
-        {
-            /* code */
-        }
-        
-    }
-    
-
-    return chi_sqr;
-}
 
 
 int main(){
