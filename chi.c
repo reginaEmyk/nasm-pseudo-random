@@ -46,21 +46,12 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
 }
 
 
-
 int* _lfsr(__int32_t);
 
-int comp (const void * elem1, const void * elem2) 
-{
-    int f = *((int*)elem1);
-    int s = *((int*)elem2);
-    if (f > s) return  1;
-    if (f < s) return -1;
-    return 0;
-}
 // null hypothesis: it is not random, numbers [0, 1M) are expected to be in 1st class
 // df = 1. df = k - 1. k = 2. k is amount of categories: uniform and not uniform.
-double chi_0_expected(int* pseudoRandom);
-double chi_0_expected(int* pseudoRandom){
+double chiUniformExpected(int* pseudoRandom);
+double chiUniformExpected(int* pseudoRandom){
     double chi_sqr = 0;  
     double* chi_sqr_classes = (double*)malloc(n_classes * sizeof(double)); 
     int pseudo = -1;
@@ -112,16 +103,13 @@ double chi_0_expected(int* pseudoRandom){
             pseudo = classes[classIdx][index][0];
             pseudoOcurr = (double)1/classes[classIdx][index][1];
 
-            // if(pseudoOcurr == 0)
-            //     pseudoOcurr = ALMOST_ZERO_DENOMINATOR;
+            if(pseudoOcurr == 0)
+                pseudoOcurr = ALMOST_ZERO_DENOMINATOR;
 
-            // obs_freq = (double)pseudoOcurr/CLASS_SIZE;
-            obs_freq = (double)1/CLASS_SIZE;
-
+            obs_freq = (double)pseudoOcurr/CLASS_SIZE;
 
             if(pseudo < class_lowest || pseudo > class_highest) 
-                // expected_freq = ALMOST_ZERO_DENOMINATOR; // cant have 0 denominator
-                expected_freq = UNIFORM_FREQ;
+                expected_freq = ALMOST_ZERO_DENOMINATOR; // cant have 0 denominator
             else
                 expected_freq = UNIFORM_FREQ;
 
@@ -131,8 +119,6 @@ double chi_0_expected(int* pseudoRandom){
         
     }
 
-
-
     return chi_sqr;
 }
 
@@ -141,8 +127,8 @@ double chi_0_expected(int* pseudoRandom){
 int main(){
     // printf("Hello, World!");
     // 16777216
-    int* pseudoRandom = (int*)malloc(array_size * sizeof(int));
-    int* CPseudoRandom = (int*)malloc(array_size * sizeof(int));
+    int* nasmPseudoRandom = (int*)malloc(array_size * sizeof(int));
+    int* cPseudoRandom = (int*)malloc(array_size * sizeof(int));
     int* pseudR_frequency = (int*)malloc(array_size * sizeof(int));
     int count_ocurr = 0;
     double freq_ob = 0; 
@@ -154,29 +140,33 @@ int main(){
 
     printf("calling 16777215 \n;");
     clock_nasm = clock();
-    pseudoRandom = _lfsr(1);
+    nasmPseudoRandom = _lfsr(1);
     clock_nasm = clock() - clock_nasm;
 
     clock_c = clock();
-    CPseudoRandom = lfsr_array(CPseudoRandom, 1);
+    cPseudoRandom = lfsr_array(cPseudoRandom, 1);
     clock_c = clock() - clock_c;
 
-    chiSquare = chi_0_expected(CPseudoRandom);
+// todo test for both arrays
+    chiSquare = chiUniformExpected(cPseudoRandom);
     printf("chi_square %f ", chiSquare);
     if(chiSquare > CRITICAL_VALUE){
-        printf(" REJECTED hypothesis, %f > %f . Numbers are NOT uniformly distributed.chi square > critical value for alpha = 0.05 and df 1.", chiSquare, CRITICAL_VALUE);
+        printf(" REJECTED hypothesis, %f > %f . Numbers are NOT uniformly distributed.chi square > critical value for alpha = 0.05 and df 1. (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n ", chiSquare, CRITICAL_VALUE);
     } else{
-        printf(" ACEPTED hypothesis, %f <= %f . Numbers are uniformly distributed.chi square <= critical value for alpha = 0.05 and df 1.", chiSquare, CRITICAL_VALUE);
+        printf(" ACEPTED hypothesis, %f <= %f . Numbers are uniformly distributed.chi square <= critical value for alpha = 0.05 and df 1. (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
     }
 
     for (int i = 0; i < array_size; i++)
     {
-        if(pseudoRandom[i] != CPseudoRandom[i]){
-            printf(" WRONG  " );
+        if(nasmPseudoRandom[i] != cPseudoRandom[i]){
+            printf(" WRONG  index %i nasm is %f c is %f", i, nasmPseudoRandom[i], cPseudoRandom[i] );
             break;
         } 
     }
     
+// todo print arrays
+// todo determine acceptance rejection regions?
+
 
     // for (int i = 0; i < array_size; i++)
     // {
@@ -184,7 +174,7 @@ int main(){
     // }
 
 
-// todo chi
+// todo chi's region of acceptance/rejection?
 
 
     

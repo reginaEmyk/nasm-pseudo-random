@@ -35,7 +35,7 @@ section .text
         xor eax, edx ; 24th bit xor 23rd xor 21st xor 20th
         ; shl edx, 19; 24th bit : original 0 bit
         ; shl eax, 23
-        xor eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th xor 1, to avoid 0
+        and eax, _STARTING_BIT; 24th bit xor 23rd xor 21st xor 20th xor 1, to avoid 0
         ret
             
     _lfsr: ; _start is in stdlib with printf 
