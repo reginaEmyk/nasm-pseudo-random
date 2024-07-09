@@ -10,6 +10,7 @@
     int const CLASS_SIZE = array_size/n_classes;
     double const UNIFORM_FREQ =  (double)1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
     double const ALMOST_ZERO_DENOMINATOR = 0.1;
+    double const CRITICAL_VALUE = 7.879; // for alpha = 0.05 and df = 1
 
 // alpha 
 
@@ -57,6 +58,7 @@ int comp (const void * elem1, const void * elem2)
     return 0;
 }
 // null hypothesis: it is not random, numbers [0, 1M) are expected to be in 1st class
+// df = 1. df = k - 1. k = 2. k is amount of categories: uniform and not uniform.
 double chi_0_expected(int* pseudoRandom);
 double chi_0_expected(int* pseudoRandom){
     double chi_sqr = 0;  
@@ -148,6 +150,7 @@ int main(){
     double one_freq = freq_exp;
     double chi_sqr = 0;
     clock_t clock_nasm, clock_c ;  // function execution takes less than a second, must use clock in ANSI C. https://stackoverflow.com/questions/361363/how-to-measure-time-in-milliseconds-using-ansi-c.
+    double chiSquare = 0;
 
     printf("calling 16777215 \n;");
     clock_nasm = clock();
@@ -158,7 +161,13 @@ int main(){
     CPseudoRandom = lfsr_array(CPseudoRandom, 1);
     clock_c = clock() - clock_c;
 
-    printf("chi_square %f ", chi_0_expected(CPseudoRandom));
+    chiSquare = chi_0_expected(CPseudoRandom);
+    printf("chi_square %f ", chiSquare);
+    if(chiSquare > CRITICAL_VALUE){
+        printf(" REJECTED hypothesis, %f > %f . Numbers are NOT uniformly distributed.chi square > critical value for alpha = 0.05 and df 1.", chiSquare, CRITICAL_VALUE);
+    } else{
+        printf(" ACEPTED hypothesis, %f <= %f . Numbers are uniformly distributed.chi square <= critical value for alpha = 0.05 and df 1.", chiSquare, CRITICAL_VALUE);
+    }
 
     for (int i = 0; i < array_size; i++)
     {
