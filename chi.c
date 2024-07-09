@@ -5,8 +5,13 @@
     #define _LAST_BIT_ 0x000001//
     #define _24_BITS_ 0xFFFFFF// only the last 24 bits are 1
     #define _BIT_MASK_TAPS_ 0x00001B // mask where only TAPS are one (24,22,21,20), big endian for cases like seed = 1
-    #define array_size 16777216
+    #define array_size 16777216 // 16777215 is the biggest 24bit int
+    #define n_classes 16
+    int const CLASS_SIZE = array_size/n_classes;
+    double const UNIFORM_FREQ =  1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
+    double const ALMOST_ZERO_DENOMINATOR = 0.000000000000000000000000001;
 
+// alpha 
 
 int get_polynomial(int lfsr){
     int bit, aux;
@@ -51,6 +56,127 @@ int comp (const void * elem1, const void * elem2)
     if (f < s) return -1;
     return 0;
 }
+// null hypothesis: it is not random, numbers [0, 1M) are expected to be in 1st class
+double chi_0_expected(int* pseudoRandom);
+double chi_0_expected(int* pseudoRandom){
+    double chi_sqr = 0;  
+    double* chi_sqr_classes = (double*)malloc(n_classes * sizeof(double)); 
+    int pseudo = -1;
+    double expected_freq = (double)1/(double)array_size; // all numbers in class have equal chance. double on numerator is enough but just in case
+    double obs_freq;
+    int class_lowest = 0; // todo uniform typing
+    int class_highest = 0;
+    int pseudoOcurr = 0;
+
+// allocating classes of pseudo randoms and their ocurrences
+// classes[classIdx][idx], has pseudo and ocurrence. classes->class->index->pseudo|ocurrence.
+    int*** classes = (int***)malloc(n_classes * sizeof(int**)); // allocate space for each class (16 classes)
+    for (int classIdx = 0; classIdx < n_classes; classIdx++)
+    {
+        classes[classIdx] = (int**)malloc(array_size/n_classes * sizeof(int*)); // allocate space for pointer to each pseudo (1M pseudo per class)
+        for (int pseudoIdx = 0; pseudoIdx < array_size/n_classes; pseudoIdx++)
+        {
+            classes[classIdx][pseudoIdx] = (int*)malloc(2 * sizeof(int)); // allocate space for value[0] and ocurrence[1] of each pseudo 
+        }
+        
+    }
+
+// populating classes with pseudorandoms and their ocurrences
+// separate all pseudos in n_classes
+    for (int MClass = 0; MClass < n_classes; MClass++) // 16 classes
+    {
+        for (int index = 0, i = 0; i < array_size/n_classes; i++) // iterate through each class without separating pseudos 
+        {
+            index = i;
+            classes[MClass][index][0] = pseudoRandom[index]; // put pseudo in class
+            classes[MClass][index][1] += 1; // increase counter of ocurrence of pseudo in this class. malloc ensures it starts at 0
+            // printf(" %i", index);
+        }
+        
+    }
+
+
+
+// get chi_sqr
+    for (int classIdx = 0; classIdx < n_classes; classIdx++) // 16 classes
+    {
+        class_lowest = classIdx * array_size/n_classes;
+        class_highest = classIdx * (array_size + 1)/n_classes - 1;
+        for (int index = 0, i = 0; i < array_size/n_classes; i++) // iterate through each class without separating pseudos 
+        {
+            // a number is expected to be in a class of uniform distribution when
+            // it's within the bounds of the class, and exp freq is UNIFORM_FREQ;
+            // otherwise exp freq is 0
+            pseudo = classes[classIdx][index][0];
+            pseudoOcurr = (double)1/classes[classIdx][index][1];
+            if(pseudoOcurr == 0)
+                pseudoOcurr = ALMOST_ZERO_DENOMINATOR;
+            obs_freq = pseudoOcurr;
+            if(pseudo < class_lowest || pseudo > class_highest) 
+                expected_freq = ALMOST_ZERO_DENOMINATOR; // cant have 0 denominator
+            else
+                expected_freq = UNIFORM_FREQ;
+
+            chi_sqr += (obs_freq - expected_freq) * (obs_freq - expected_freq) / (expected_freq);
+        }
+        
+    }
+
+
+//     // put a count of pseudo random's occurences in ocurrences[pseudo random]
+//     // also prints if a pseudo was generated more than once
+//     printf("Pseudo random array has repeated values: ");
+//     for (int i = 0; i < array_size; i++)
+//     {
+//         pseudo = pseudoRandom[i];
+//         occurences[pseudo] += 1;
+//         if(occurences[pseudo] > 1)
+//             printf("%i ", *pseudoRandom);            
+//     }
+//     printf("\n");
+
+// printf("indexes ");
+
+//     for (int MClass = 0; MClass < n_classes; MClass++) // 16 classes
+//     {
+//         for (int index = 0, i = 0; i < array_size/n_classes; i++) // iterate through each class without separating pseudos 
+//         {
+//             index = i + MClass * array_size/n_classes;
+//             if (occurences[index] == 0 ){
+//                 obs_freq = 0;
+//             }
+//             else{                
+//                 obs_freq = (double)occurences[index]/array_size;
+//             }
+//             chi_sqr += (obs_freq - expected_freq) * (obs_freq - expected_freq) / (expected_freq);
+//             // printf(" %i", index);
+//         }
+        
+//     }
+    
+
+    return chi_sqr;
+}
+
+
+
+double chi_any_chance(int* pseudoRandom);
+double chi_any_chance(int* pseudoRandom){
+    double chi_sqr = 0;
+
+    for (int i = 0; i < 16; i++) // 16 classes
+    {
+        for (int i = 0; i < array_size/16; i++)
+        {
+            /* code */
+        }
+        
+    }
+    
+
+    return chi_sqr;
+}
+
 
 int main(){
     // printf("Hello, World!");
@@ -63,31 +189,41 @@ int main(){
     double freq_exp = 1/array_size;
     double one_freq = freq_exp;
     double chi_sqr = 0;
-    time_t time_nasm, time_c;
-    clock_t clock_nasm, clock_c ;  
-
-
+    clock_t clock_nasm, clock_c ;  // function execution takes less than a second, must use clock in ANSI C. https://stackoverflow.com/questions/361363/how-to-measure-time-in-milliseconds-using-ansi-c.
 
     printf("calling 16777215 \n;");
-    time_nasm = time(NULL);
     clock_nasm = clock();
     pseudoRandom = _lfsr(1);
-    time_nasm = time(NULL) - time_nasm;
     clock_nasm = clock() - clock_nasm;
 
-    time_c = time(NULL);
     clock_c = clock();
     CPseudoRandom = lfsr_array(CPseudoRandom, 1);
     clock_c = clock() - clock_c;
-    time_c = time(NULL) - time_c;
+
+    printf("chi_square %f ", chi_0_expected(CPseudoRandom));
+
+    for (int i = 0; i < array_size; i++)
+    {
+        if(pseudoRandom[i] != CPseudoRandom[i]){
+            printf(" WRONG  " );
+            break;
+        } 
+    }
+    
 
     // for (int i = 0; i < array_size; i++)
     // {
     //     printf(" %i; ", pseudoRandom[i]);
     // }
+
+
+// todo chi
+
+
     
     printf("\n time taken by nasm: %ld clocks, %ld secs", clock_nasm, clock_nasm/CLOCKS_PER_SEC);
     printf("\n time taken by c: %ld clocks, %ld secs \n", clock_c, clock_c/CLOCKS_PER_SEC);
+    printf("\n c/nasm (clocks): %f  \n", (double)clock_c/(double)clock_nasm);
 
 
 
