@@ -1,21 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-__int32_t _lfsr(__int32_t);
+int* _lfsr(__int32_t);
 
 int main(){
     // printf("Hello, World!");
     // 16777216
-    __uint32_t* pseudoRandom = (__uint32_t*)malloc(16777216 * sizeof(__uint32_t));
+    int* pseudoRandom = (int*)malloc(16777216 * sizeof(int));
     printf("calling 16777215 \n;");
+    
+    pseudoRandom = _lfsr(0);
+
     for (int i = 0; i < 16777; i++)
     {
-        if(i==0)
-            pseudoRandom[i] = _lfsr(0);
-        else
-            pseudoRandom[i] = _lfsr(pseudoRandom[i-1]);
         printf(" %i; ", pseudoRandom[i]);
     }
+    
     printf("\n finished printing 16777215");
 
     //chi square i sum of (realFreq - expFreq)**2/(expFreq)

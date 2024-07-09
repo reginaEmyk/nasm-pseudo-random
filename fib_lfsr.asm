@@ -39,39 +39,39 @@ section .text
         ret
             
     _lfsr: ; _start is in stdlib with printf 
-    push ebp
-    mov  ebp, esp
-    mov eax, [esp+8] ; previous stack + 4 for eax
-    mov ecx, 0 ; to access array
+        push ebp
+        mov  ebp, esp
+        mov eax, [esp+8] ; previous stack + 4 for eax
+        mov ecx, 0 ; to access array
 
-    ; get seed from current clock time
-    ; https://www.diva-portal.org/smash/get/diva2:812512/FULLTEXT01.pdf    
-    ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
-    call_loop_seed:
-        call loop_seed
-        ; todo generate 1M per wewerwer
-    cmp eax, 0
-    je call_loop_seed
+        ; get seed from current clock time
+        ; https://www.diva-portal.org/smash/get/diva2:812512/FULLTEXT01.pdf    
+        ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
+        call_loop_seed:
+            call loop_seed
+            ; todo generate 1M per wewerwer
+        cmp eax, 0
+        je call_loop_seed
 
-    gen_lfsr: 
-        push eax
+        gen_lfsr: 
+            push eax
 
-   ; shifts lfsr in edx so 23rd bit is the bit to perform xor on the 23rd bit of lfsr in eax
-        call get_polynomial ; puts polynomial in eax, eax must have lfsr
-        pop edx ; restore lfsr
-        shr edx, 1 ; shift lfsr by 1
-        or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in get_polynomial
-    ; lfsr = polynomial | lfsr << 1 , upper 8 bits are 0. polynomial must be 0 except in 24th bit
-        mov [array+ecx], edx ; push pseudo random number to array
-        inc ecx ; increment counter
-        cmp ecx, array_size
-        jl gen_lfsr ; todo jl or jle
+    ; shifts lfsr in edx so 23rd bit is the bit to perform xor on the 23rd bit of lfsr in eax
+            call get_polynomial ; puts polynomial in eax, eax must have lfsr
+            pop edx ; restore lfsr
+            shr edx, 1 ; shift lfsr by 1
+            or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in get_polynomial
+        ; lfsr = polynomial | lfsr << 1 , upper 8 bits are 0. polynomial must be 0 except in 24th bit
+            mov [array+ecx], edx ; push pseudo random number to array
+            inc ecx ; increment counter
+            cmp ecx, array_size
+            jl gen_lfsr ; todo jl or jle
 
-        ; AL, AX or DX:A
-        mov eax, array
-        mov esp, ebp
-        pop ebp ; restore stack to return to main
-        
-        ret
+            ; AL, AX or DX:A
+            mov eax, array
+            mov esp, ebp
+            pop ebp ; restore stack to return to main
+            
+            ret
 
 ; this was made for linux
