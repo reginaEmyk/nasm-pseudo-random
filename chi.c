@@ -63,12 +63,12 @@ double chiUniformExpected(int* pseudoRandom){
     int class_highest = 0;
     int pseudoOcurr = 0;
 
-// counts to print frequencies as output txt file is too big
-    int expNotObs = 0;
-    int expOverObs = 0;
-    int expObs = 0;
-    int notExpObs = 0;
-    int countOther = 0;
+// counts to print frequencies as output txt file is too big. double for frequency calculation later
+    double expNotObs = 0;
+    double expOverObs = 0;
+    double expObs = 0;
+    double notExpObs = 0;
+    double countOther = 0;
 
 // allocating classes of pseudo randoms and their ocurrences
 // classes[classIdx][idx], has pseudo and ocurrence. classes->class->index->pseudo|ocurrence.
@@ -102,9 +102,9 @@ double chiUniformExpected(int* pseudoRandom){
     for (int classIdx = 0; classIdx < n_classes; classIdx++) // 16 classes
     {
         class_lowest = classIdx * array_size/n_classes;
-        class_highest = classIdx * (array_size + 1)/n_classes - 1;
+        class_highest = (classIdx + 1) * (array_size)/n_classes - 1;
         expNotObs = 0;     expOverObs = 0;     expObs = 0;     notExpObs = 0;   countOther = 0;
-        printf("class %i [%i...%i]; \n", classIdx, class_lowest, class_highest);
+        printf("class %i [%i...%i]: ", classIdx, class_lowest, class_highest);
 
         for (int index = 0, i = 0; index < array_size/n_classes; index++) // iterate through each class without separating pseudos 
         {
@@ -142,7 +142,7 @@ double chiUniformExpected(int* pseudoRandom){
             // printf("[%i]; pseudo random: %i; obs_freq: %f; expected_freq: %f; \n", classIdx, pseudo, obs_freq, expected_freq);
             chi_sqr += (obs_freq - expected_freq) * (obs_freq - expected_freq) / (expected_freq);
         }
-        printf(" Expected and Observed: %i; Expected and Not Observed: %i; Not Expected and Observed: %i", expObs, expNotObs, notExpObs);
+        printf(" Expected and Observed: %.0f (%f), ; Expected and Not Observed: %.0f (%f); Not Expected and Observed: %.0f (%f); Other: %.0f (%f); \n \n", expObs, expObs/array_size, expNotObs, expNotObs/array_size, notExpObs, notExpObs/array_size, countOther);
         
     }
     // printf("Exiting chi square test... \n");
