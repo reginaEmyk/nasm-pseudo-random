@@ -16,9 +16,28 @@ gcc -g -m32 lfsr.c fib_lfsr.o -o lfsr
 gdb ./lfsr 
 
 
+
+
 nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
 gcc -g -m32 chi.c fib_lfsr.o -o chi
 gdb ./chi
+
+p * nasmPseudoRandom@10 
+print *(int *)($ebp+4)
+
+x/10dw 0x56559008
+
+esp - 44?
+
+
+
+
+
+
+
+gcc -g -m32 c_fib_lfsr.c fib_lfsr.o -o c_fib_lfsr
+gdb ./c_fib_lfsr
+
 
 nasm -g -f elf32 fib_lfsr.asm 
  gcc -o fib_lfsr fib_lfsr.o chi.c asm_io.o
@@ -58,6 +77,25 @@ nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
 gcc -g -m32 lfsr.c fib_lfsr.o -o lfsr
 gdb ./lfsr 
 
+ca7c
+
+nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
+gcc -g -m32 chi.c fib_lfsr.o -o chi
+gdb ./chi 
+
+
+
+nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
+gcc -g -m32 main.c fib_lfsr.o -o lfsr
+./lfsr 
+
+
+
+
+0xffffca7c
+
+print *(int *)($ebp+4)
+esp - 44?
 
 
 bit is a polynomial of xors
