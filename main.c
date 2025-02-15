@@ -18,7 +18,7 @@
     double const CRITICAL_VALUE = 7.879; // for alpha = 0.05 and df = 1
     #define SEED 1
 
-int get_polynomial(int lfsr){
+int get_polynomial_a(int lfsr){
     int bit, aux;
 
     bit = (lfsr & BIT_MASK_TAPS);
@@ -34,7 +34,7 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
     int polynomial = -1;
 
     for (int i = 0; i < ARRAY_SIZE; i++){
-        polynomial = get_polynomial(lfsr);
+        polynomial = get_polynomial_a(lfsr);
         lfsr = (lfsr >> 1) | polynomial;
 
         pseudoRandom[i] = lfsr;
@@ -44,8 +44,12 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
  
 }
 
-
-int* _lfsr(__int32_t);
+#ifdef _WIN32
+int* lfsr(int);
+#endif
+#ifdef linux
+int* _lfsr(int);
+#endif
 
 // null hypothesis: it is not random, numbers [0, 1M) are expected to be in 1st class
 // df = 1. df = k - 1. k = 2. k is amount of categories: uniform and not uniform.
@@ -159,7 +163,13 @@ int main(){
     
     clockNasm = clock();
     printf("Calling LFSR in nasm, SEED: %i ...", SEED);
+    #ifdef _WIN32
+    nasmPseudoRandom = lfsr(SEED);
+    #endif
+    #ifdef linux
     nasmPseudoRandom = _lfsr(SEED);
+    #endif
+
     printf("Finished\n");
     clockNasm = clock() - clockNasm;
 
