@@ -1,6 +1,7 @@
 Calling LFSR in nasm, SEED: 1 ...Finished
 Calling LFSR in c, SEED: 1 ...Finished
- Do both nasm and c implementations produce the same values? YES! The implementations for c and nasm gave the same resulting array. 
+ Do both nasm and c implementations produce the same values?
+ YES! The implementations for c and nasm gave the same resulting array. 
 
 Initiating chi square test... 
  class 0 (1...1048576]:
@@ -105,6 +106,6 @@ chi_square 1572834.000474
  (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)
 ...Finished Chi Test
 
-time taken by nasm: 101301 clocks, 0 secs 
-time taken by c: 229351 clocks, 0 secs 
-c/nasm (clocks): 2.264055  
+time taken by nasm: 77175 clocks, 0 secs 
+time taken by c: 164485 clocks, 0 secs 
+c/nasm (clocks): 2.131325  

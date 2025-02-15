@@ -1,6 +1,6 @@
 // to run
-// nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
-// gcc -g -m32 main.c fib_lfsr.o -o lfsr
+// nasm -g -f elf32 lfsr.asm # compile for 32 bits arch
+// gcc -g -m32 main.c lfsr.o -o lfsr
 // ./lfsr 
 
 #include <stdio.h>
@@ -22,8 +22,9 @@ int get_polynomial_a(int lfsr){
     int bit, aux;
 
     bit = (lfsr & BIT_MASK_TAPS);
+ // bit =  x^24 + x^23        + x^21        + x^20         + 1
     bit = (lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 4)) & LAST_BIT;
-    bit = (bit << 23); // todo checl if this ever above 24
+    bit = (bit << 23);
 
     return bit;
 }
@@ -44,12 +45,7 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
  
 }
 
-#ifdef _WIN32
 int* lfsr(int);
-#endif
-#ifdef linux
-int* _lfsr(int);
-#endif
 
 // null hypothesis: it is not random, numbers [0, 1M) are expected to be in 1st class
 // df = 1. df = k - 1. k = 2. k is amount of categories: uniform and not uniform.
@@ -169,12 +165,7 @@ int main(){
     
     clockNasm = clock();
     printf("Calling LFSR in nasm, SEED: %i ...", SEED);
-    #ifdef _WIN32
     nasmPseudoRandom = lfsr(SEED);
-    #endif
-    #ifdef linux
-    nasmPseudoRandom = _lfsr(SEED);
-    #endif
 
     printf("Finished\n");
     clockNasm = clock() - clockNasm;
@@ -197,14 +188,14 @@ int main(){
     for (int i = 0; i < ARRAY_SIZE; i++)
     {
         if(nasmPseudoRandom[i] != cPseudoRandom[i]){
-            printf("Do both nasm and c implementations produce the same values? NO!  The LFSR differ!  index %i nasm is %i c is %i", i, nasmPseudoRandom[i], cPseudoRandom[i] );
+            printf("Do both nasm and c implementations produce the same values?\n"" NO!  The LFSR differ!  index %i nasm is %i c is %i", i, nasmPseudoRandom[i], cPseudoRandom[i] );
             areBothEqual = 1;
             break;
         } 
     }
 
     if (areBothEqual == 0)
-        printf(" Do both nasm and c implementations produce the same values? YES! The implementations for c and nasm gave the same resulting array. \n");
+        printf(" Do both nasm and c implementations produce the same values?\n"" YES! The implementations for c and nasm gave the same resulting array. \n");
 
     chiSquare = chiUniformExpected(cPseudoRandom);
     printf("chi_square %f \n", chiSquare);
