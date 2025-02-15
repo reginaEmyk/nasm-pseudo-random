@@ -55,12 +55,12 @@ int* _lfsr(int);
 // df = 1. df = k - 1. k = 2. k is amount of categories: uniform and not uniform.
 double chiUniformExpected(int* pseudoRandom);
 double chiUniformExpected(int* pseudoRandom){
-    printf("Initiating chi square test... \n");
+    printf("\nInitiating chi square test... \n");
     double chi_sqr = 0;  
     int pseudo = -1;
     double expFreq = (double)1/(double)ARRAY_SIZE; // all numbers in class have equal chance. double on numerator is enough but just in case
     double obsFreq;
-    int classLowest = 0; // todo uniform typing
+    int classLowest = 0;
     int classHighest = 0;
     int pseudoOcurr = 0;
 
@@ -105,7 +105,7 @@ double chiUniformExpected(int* pseudoRandom){
         classLowest = classIdx * ARRAY_SIZE/N_CLASSES + 1;
         classHighest = (classIdx + 1) * (ARRAY_SIZE)/N_CLASSES;
         expNotObs = 0;     expOverObs = 0;     expObs = 0;     notExpObs = 0;   countOther = 0;
-        printf("class %i (%i...%i]: ", classIdx, classLowest, classHighest);
+        printf(" class %i (%i...%i]:\n", classIdx, classLowest, classHighest);
 
         for (int index = 0, i = 0; index < ARRAY_SIZE/N_CLASSES; index++) // iterate through each class without separating pseudos 
         {
@@ -143,11 +143,17 @@ double chiUniformExpected(int* pseudoRandom){
             // printf("[%i]; pseudo random: %i; obsFreq: %f; expFreq: %f; \n", classIdx, pseudo, obsFreq, expFreq);
             chi_sqr += (obsFreq - expFreq) * (obsFreq - expFreq) / (expFreq);
         }
-        printf(" Expected and Observed: %.0f (%f) ; Expected and Not Observed: %.0f (%f); Not Expected and Observed: %.0f (%f); Other: %.0f (%f); \n \n", expObs, expObs/ARRAY_SIZE, expNotObs, expNotObs/ARRAY_SIZE, notExpObs, notExpObs/ARRAY_SIZE, countOther, countOther/ARRAY_SIZE);
-        
+        printf(
+    "  Expected and Observed: %.0f (%f) ;\n"
+    "  Expected and Not Observed: %.0f (%f);\n"
+    "  Not Expected and Observed: %.0f (%f);\n"
+    "  Other: %.0f (%f);\n\n",
+    expObs, expObs / ARRAY_SIZE,
+    expNotObs, expNotObs / ARRAY_SIZE,
+    notExpObs, notExpObs / ARRAY_SIZE,
+    countOther, countOther / ARRAY_SIZE
+);
     }
-    printf("Finished \n");
-
     return chi_sqr;
 }
 
@@ -187,27 +193,29 @@ int main(){
     }
 
 // check if both implementations produced the same values in the same order
+// both given same seed
     for (int i = 0; i < ARRAY_SIZE; i++)
     {
         if(nasmPseudoRandom[i] != cPseudoRandom[i]){
-            printf(" Do both nasm and c implementations produce the same values? NO!  The LFSR differ!  index %i nasm is %i c is %i", i, nasmPseudoRandom[i], cPseudoRandom[i] );
+            printf("Do both nasm and c implementations produce the same values? NO!  The LFSR differ!  index %i nasm is %i c is %i", i, nasmPseudoRandom[i], cPseudoRandom[i] );
             areBothEqual = 1;
             break;
         } 
     }
 
-    if (areBothEqual == 0){
+    if (areBothEqual == 0)
         printf(" Do both nasm and c implementations produce the same values? YES! The implementations for c and nasm gave the same resulting array. \n");
-// since both are known to be equal and the output is huge, only reporting for one lfsr
-        chiSquare = chiUniformExpected(cPseudoRandom);
-        printf("chi_square %f \n", chiSquare);
-        if(chiSquare > CRITICAL_VALUE){
-            printf(" REJECTED hypothesis, chi-square: %f > %f (critical value). Numbers are NOT uniformly distributed.chi square > critical value for alpha = 0.05 and df 1. (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n ", chiSquare, CRITICAL_VALUE);
-        } else{
-            printf(" ACEPTED hypothesis, chi-square: %f <= %f (critical value). Numbers are uniformly distributed.chi square <= critical value for alpha = 0.05 and df 1. (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
-    }
 
-}
+    chiSquare = chiUniformExpected(cPseudoRandom);
+    printf("chi_square %f \n", chiSquare);
+
+    if(chiSquare > CRITICAL_VALUE)
+        printf(" REJECTED hypothesis, chi-square: %f > %f (critical value)\n"" Numbers are NOT uniformly distributed.chi square > critical value for alpha = 0.05 and df 1\n"" (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
+    else
+        printf(" ACEPTED hypothesis, chi-square: %f <= %f (critical value)\n"" Numbers are uniformly distributed.chi square <= critical value for alpha = 0.05 and df 1\n"" (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
+    
+    printf("...Finished Chi Test\n\n");
+
    
     printf("time taken by nasm: %ld clocks, %ld secs \n", clockNasm, clockNasm/CLOCKS_PER_SEC);
     printf("time taken by c: %ld clocks, %ld secs \n", clockC, clockC/CLOCKS_PER_SEC);

@@ -1,0 +1,110 @@
+Calling LFSR in nasm, SEED: 1 ...Finished
+Calling LFSR in c, SEED: 1 ...Finished
+ Do both nasm and c implementations produce the same values? YES! The implementations for c and nasm gave the same resulting array. 
+
+Initiating chi square test... 
+ class 0 (1...1048576]:
+  Expected and Observed: 1113813 (0.066388) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983339 (0.058612);
+  Other: 0 (0.000000);
+
+ class 1 (1048577...2097152]:
+  Expected and Observed: 1113920 (0.066395) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983232 (0.058605);
+  Other: 0 (0.000000);
+
+ class 2 (2097153...3145728]:
+  Expected and Observed: 1113926 (0.066395) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983226 (0.058605);
+  Other: 0 (0.000000);
+
+ class 3 (3145729...4194304]:
+  Expected and Observed: 1114015 (0.066400) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983137 (0.058600);
+  Other: 0 (0.000000);
+
+ class 4 (4194305...5242880]:
+  Expected and Observed: 1113950 (0.066397) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983202 (0.058603);
+  Other: 0 (0.000000);
+
+ class 5 (5242881...6291456]:
+  Expected and Observed: 1114628 (0.066437) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 982524 (0.058563);
+  Other: 0 (0.000000);
+
+ class 6 (6291457...7340032]:
+  Expected and Observed: 1114285 (0.066417) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 982867 (0.058583);
+  Other: 0 (0.000000);
+
+ class 7 (7340033...8388608]:
+  Expected and Observed: 1113954 (0.066397) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983198 (0.058603);
+  Other: 0 (0.000000);
+
+ class 8 (8388609...9437184]:
+  Expected and Observed: 1113920 (0.066395) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983232 (0.058605);
+  Other: 0 (0.000000);
+
+ class 9 (9437185...10485760]:
+  Expected and Observed: 1114021 (0.066401) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983131 (0.058599);
+  Other: 0 (0.000000);
+
+ class 10 (10485761...11534336]:
+  Expected and Observed: 1114651 (0.066438) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 982501 (0.058562);
+  Other: 0 (0.000000);
+
+ class 11 (11534337...12582912]:
+  Expected and Observed: 1114224 (0.066413) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 982928 (0.058587);
+  Other: 0 (0.000000);
+
+ class 12 (12582913...13631488]:
+  Expected and Observed: 1113991 (0.066399) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983161 (0.058601);
+  Other: 0 (0.000000);
+
+ class 13 (13631489...14680064]:
+  Expected and Observed: 1114247 (0.066414) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 982905 (0.058586);
+  Other: 0 (0.000000);
+
+ class 14 (14680065...15728640]:
+  Expected and Observed: 1113953 (0.066397) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 983199 (0.058603);
+  Other: 0 (0.000000);
+
+ class 15 (15728641...16777216]:
+  Expected and Observed: 1114294 (0.066417) ;
+  Expected and Not Observed: 0 (0.000000);
+  Not Expected and Observed: 982858 (0.058583);
+  Other: 0 (0.000000);
+
+chi_square 1572834.000474 
+ REJECTED hypothesis, chi-square: 1572834.000474 > 7.879000 (critical value)
+ Numbers are NOT uniformly distributed.chi square > critical value for alpha = 0.05 and df 1
+ (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)
+...Finished Chi Test
+
+time taken by nasm: 101301 clocks, 0 secs 
+time taken by c: 229351 clocks, 0 secs 
+c/nasm (clocks): 2.264055  
