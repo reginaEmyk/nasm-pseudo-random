@@ -1,4 +1,4 @@
-// to quickly run, nasm coded for ubuntu
+// to run
 // nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
 // gcc -g -m32 main.c fib_lfsr.o -o lfsr
 // ./lfsr 
