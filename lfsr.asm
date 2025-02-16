@@ -62,7 +62,7 @@ section .text
             mov [pseudo_randoms_ + ecx*4], edx ; push pseudo random number to array
         mov eax,edx; push lfsr in eax
         inc ecx ; increment counter
-        cmp ecx, array_size ; loop until all 'array_size' amount of pseudo randoms are pushed to array
+        cmp ecx, [ebp+12] ; loop until all 'array_size' amount of pseudo randoms are pushed to array
         jl gen_lfsr ; todo jl or jle
 
         ; AL, AX or DX:A

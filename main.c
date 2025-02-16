@@ -10,7 +10,7 @@
     #define LAST_BIT 0x000001//
     #define BITS_24 0xFFFFFF// only the last 24 bits are 1
     #define BIT_MASK_TAPS 0x00001B // mask where only TAPS are one (24,22,21,20), big endian for cases like seed = 1
-    #define ARRAY_SIZE 16777216 // number of numbers to generate (16777215 is the biggest 24bit int)
+    #define ARRAY_SIZE 16777215 // number of numbers to generate (16777216 is maximum supported)
     #define N_CLASSES 16
     int const CLASS_SIZE = (BITS_24+1)/N_CLASSES;
     double const UNIFORM_FREQ =  (double)1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
@@ -21,7 +21,7 @@
     #define SEED 1
 
 int get_polynomial_a(int lfsr){
-    int bit, aux;
+    int bit;
 
     bit = (lfsr & BIT_MASK_TAPS);
  // bit =  x^24 + x^23        + x^21        + x^20         + 1
@@ -47,13 +47,14 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
  
 }
 
-int* lfsr(int);
+int* lfsr(int,int);
 
 // null hypothesis: it is uniform, numbers [0, 1M) are expected to be in 1st class
 double chiUniformExpected(int* pseudoRandom) {
     printf("\nInitiating chi square test... \n");
+    printf("\tThe hypoteshis: generated distribution is uniform\n");
     double chi = 0;
-    const int expectedFrequency = ARRAY_SIZE/N_CLASSES; // if array_size = 2^24, expectedFrequency = 1.048.576
+    const double expectedFrequency = ARRAY_SIZE/N_CLASSES; // if array_size = 2^24, expectedFrequency = 1.048.576
 
     int* observationsPerClass = calloc(N_CLASSES,sizeof(int)); // 0 initialize at calloc
 
@@ -63,12 +64,12 @@ double chiUniformExpected(int* pseudoRandom) {
     }
 
 
-    printf("%15s %12s %8s  %8s\n", "Number in class", "", "Observed", "Expected");
+    printf("\t%15s %12s %8s  %8s\n", "Number in class", "", "Observed", "Expected");
     // Calculating chi
     for (int n = 0; n < N_CLASSES; n++) // 16 classes
     {
-        printf("Class (%8d, %8d] : %7d | %7d\n", n*CLASS_SIZE, (n+1)*CLASS_SIZE, observationsPerClass[n], expectedFrequency);
-        int a = (observationsPerClass[n] - expectedFrequency);
+        printf("\tClass (%8d, %8d] : %7d | %7.1f\n", n*CLASS_SIZE, (n+1)*CLASS_SIZE, observationsPerClass[n], expectedFrequency);
+        double a = (observationsPerClass[n] - expectedFrequency);
         chi += a*a;
     }
     chi /= expectedFrequency;
@@ -87,7 +88,7 @@ int main(){
     
     printf("Calling LFSR in nasm, SEED: %i ...", SEED);
     clockNasm = clock();
-    nasmPseudoRandom = lfsr(SEED);
+    nasmPseudoRandom = lfsr(SEED,ARRAY_SIZE);
     clockNasm = clock() - clockNasm;
     printf("Finished\n");
 
@@ -119,33 +120,59 @@ int main(){
         printf(" Do both nasm and c implementations produce the same values?\n"" YES! The implementations for c and nasm gave the same resulting array. \n");
 
     double chiSquare = chiUniformExpected(cPseudoRandom);
-    printf("chi_square %f \n", chiSquare);
+    printf("\tchi_square %f \n", chiSquare);
 
     if(chiSquare > CRITICAL_VALUE)
-        printf(" REJECTED hypothesis, chi-square: %f > %f (critical value)\n"" Numbers are NOT uniformly distributed. chi square > critical value for alpha = 0.05 and df 15\n"" (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
+        printf("\tREJECTED hypothesis, chi-square: %f > %f (critical value)\n"" Numbers are NOT uniformly distributed. chi square > critical value for alpha = 0.05 and df 15\n"" (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
     else
-        printf(" ACEPTED hypothesis, chi-square: %f <= %f (critical value)\n"" Numbers are uniformly distributed. chi square <= critical value for alpha = 0.05 and df 15\n"" (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
+        printf("\tNot found enough evidence to reject the hypothesis, chi-square: %f <= %f (critical value)\n""\tNumbers are uniformly distributed. chi square <= critical value for alpha = 0.05 and df 15\n""\t(chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
     
     printf("...Finished Chi Test\n\n");
 
    
     printf("time taken by nasm: %ld clocks, %ld miliseconds \n", clockNasm, clockNasm*1000/CLOCKS_PER_SEC);
     printf("time taken by c: %ld clocks, %ld miliseconds \n", clockC, clockC*1000/CLOCKS_PER_SEC);
-    printf("c/nasm (clocks): %f  \n", (double)clockC/(double)clockNasm);
+    printf("c/nasm (clocks): %f  \n\n", (double)clockC/(double)clockNasm);
+
+
+    unsigned short* aparicoes = calloc(BITS_24+1,sizeof(short)); // initialize 0 array
+
+    for (size_t i = 0; i < BITS_24+1; i++)
+    {
+        aparicoes[nasmPseudoRandom[i]] += 1;
+    }
+
+    printf("Check to see if all the numbers were generated...\n");
+    if (ARRAY_SIZE > BITS_24) {
+        for (size_t i = 0; i < BITS_24+1; i++)
+        {
+            if (aparicoes[i] > 1) {
+                printf("\tError, the number %d was generated %d times\n", i, aparicoes[i]);
+            }
+            if (aparicoes[i] == 0) {
+                printf("\tError, the number %d was generated 0 vezes\n", i);
+            }
+        }
+    } else {
+        printf("There is no reason to check if not all possible numbers got a change to be generated (ARRAY_SIZE too small)\n");
+    }
+    printf("\n");
+    
+    
 
 // extra report functions 
 
 // print generated numbers
-    // printf("Printing Pseudo randoms generated with nasm function... \n");
-    //  for (int i = 0; i < 5  ; i++)
-    //  {
-    //     printf(" %i \n", nasmPseudoRandom[i]);
-    //  }
-    // printf("Printed Pseudo randoms generated with nasm function. \n");
-    //  for (int i = ARRAY_SIZE - 5; i < ARRAY_SIZE ; i++)
-    //  {
-    //     printf(" %i \n", nasmPseudoRandom[i]);
-    //  }
+    printf("Printing Pseudo randoms generated with nasm function... \n");
+     for (int i = 0; i < 5  ; i++)
+     {
+        printf(" %i \n", nasmPseudoRandom[i]);
+     }
+    printf("Printed Pseudo randoms generated with nasm function. \n");
+     for (int i = ARRAY_SIZE - 5; i < ARRAY_SIZE ; i++)
+     {
+        printf(" %i \n", nasmPseudoRandom[i]);
+     }
 
     // printf("Printing Pseudo randoms generated with c function... \n");
     //  for (int i = 0; i < ARRAY_SIZE; i++)
