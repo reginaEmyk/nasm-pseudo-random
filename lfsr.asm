@@ -7,6 +7,7 @@ section .data
     pseudo_randoms_ times array_size dd 0; 
     
 section .text
+    global _lfsr 
     global lfsr ; rename to start with underscore if not in linux, __lfsr
     global get_polynomial
     global loop_seed
@@ -39,6 +40,7 @@ section .text
         shl eax, 23
         ret
             
+    _lfsr:
     lfsr: ; _start is in stdlib with printf 
         push ebp
         mov  ebp, esp
