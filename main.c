@@ -10,7 +10,7 @@
     #define LAST_BIT 0x000001//
     #define BITS_24 0xFFFFFF// only the last 24 bits are 1
     #define BIT_MASK_TAPS 0x00001B // mask where only TAPS are one (24,22,21,20), big endian for cases like seed = 1
-    #define ARRAY_SIZE 16777215 // number of numbers to generate (16777216 is maximum supported)
+    #define ARRAY_SIZE 16777216 // number of numbers to generate (16777216 is maximum supported)
     #define N_CLASSES 16
     int const CLASS_SIZE = (BITS_24+1)/N_CLASSES;
     double const UNIFORM_FREQ =  (double)1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
@@ -54,7 +54,7 @@ double chiUniformExpected(int* pseudoRandom) {
     printf("\nInitiating chi square test... \n");
     printf("\tThe hypoteshis: generated distribution is uniform\n");
     double chi = 0;
-    const double expectedFrequency = ARRAY_SIZE/N_CLASSES; // if array_size = 2^24, expectedFrequency = 1.048.576
+    const double expectedFrequency = (double)ARRAY_SIZE/(double)N_CLASSES; // if array_size = 2^24, expectedFrequency = 1.048.576
 
     int* observationsPerClass = calloc(N_CLASSES,sizeof(int)); // 0 initialize at calloc
 
@@ -68,7 +68,7 @@ double chiUniformExpected(int* pseudoRandom) {
     // Calculating chi
     for (int n = 0; n < N_CLASSES; n++) // 16 classes
     {
-        printf("\tClass (%8d, %8d] : %7d | %7.1f\n", n*CLASS_SIZE, (n+1)*CLASS_SIZE, observationsPerClass[n], expectedFrequency);
+        printf("\tClass (%8d, %8d] : %7d | %7.2f\n", n*CLASS_SIZE, (n+1)*CLASS_SIZE, observationsPerClass[n], expectedFrequency);
         double a = (observationsPerClass[n] - expectedFrequency);
         chi += a*a;
     }
@@ -137,13 +137,13 @@ int main(){
 
     unsigned short* aparicoes = calloc(BITS_24+1,sizeof(short)); // initialize 0 array
 
-    for (size_t i = 0; i < BITS_24+1; i++)
+    for (size_t i = 0; i < ARRAY_SIZE; i++)
     {
         aparicoes[nasmPseudoRandom[i]] += 1;
     }
 
     printf("Check to see if all the numbers were generated...\n");
-    if (ARRAY_SIZE > BITS_24) {
+    if (ARRAY_SIZE >= BITS_24) {
         for (size_t i = 0; i < BITS_24+1; i++)
         {
             if (aparicoes[i] > 1) {
@@ -151,10 +151,13 @@ int main(){
             }
             if (aparicoes[i] == 0) {
                 printf("\tError, the number %d was generated 0 vezes\n", i);
+                if (i == 0) {
+                    printf("\tThere is no problem, 0 is not supposed to be generated\n");
+                }
             }
         }
     } else {
-        printf("There is no reason to check if not all possible numbers got a change to be generated (ARRAY_SIZE too small)\n");
+        printf("There is no reason to check if not all possible numbers got a chance to be generated (ARRAY_SIZE too small)\n");
     }
     printf("\n");
     
