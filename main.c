@@ -62,10 +62,12 @@ double chiUniformExpected(int* pseudoRandom) {
         observationsPerClass[pseudoRandom[i]/CLASS_SIZE]++;
     }
 
+
+    printf("%15s %12s %8s  %8s\n", "Number in class", "", "Observed", "Expected");
     // Calculating chi
     for (int n = 0; n < N_CLASSES; n++) // 16 classes
     {
-        printf("Number of observations in class (%.2dM,%.2dM] | Expected number : %d | %d\n", n, n+1, observationsPerClass[n], expectedFrequency);
+        printf("Class (%8d, %8d] : %7d | %7d\n", n*CLASS_SIZE, (n+1)*CLASS_SIZE, observationsPerClass[n], expectedFrequency);
         int a = (observationsPerClass[n] - expectedFrequency);
         chi += a*a;
     }
