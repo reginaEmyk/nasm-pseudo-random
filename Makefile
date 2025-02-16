@@ -1,8 +1,8 @@
 lfsr: main.o lfsr.o
-	gcc -g -m32 main.o lfsr.o -o lfsr
+	gcc -Wall -g -m32 main.o lfsr.o -o lfsr
 
 main.o: main.c
-	gcc -g -m32 -c main.c
+	gcc -Wall -g -m32 -c main.c
 
 lfsr.o: lfsr.asm
 	nasm -g -f elf32 lfsr.asm
