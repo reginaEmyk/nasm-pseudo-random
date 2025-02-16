@@ -1,4 +1,4 @@
-; TAPS from https://www.infineon.com/dgdl/Infineon-24_BIT_Pseudo_Random_Sequence_Generator_Datasheet_PRS24_V_3.4-Software%20Module%20Datasheets-v03_04-EN.pdf?fileId=8ac78c8c7d0d8da4017d0f985e3d0761, pág. 3
+; TAPS from  pág. 3: https://www.infineon.com/dgdl/Infineon-24_BIT_Pseudo_Random_Sequence_Generator_Datasheet_PRS24_V_3.4-Software%20Module%20Datasheets-v03_04-EN.pdf?fileId=8ac78c8c7d0d8da4017d0f985e3d0761
 section .data
     %assign _LAST_BIT_ 0x000001; only the last 24 bits are 
     %assign _24_BITS 0xFFFFFF; only the last 24 bits are 1

@@ -10,7 +10,7 @@
     #define LAST_BIT 0x000001//
     #define BITS_24 0xFFFFFF// only the last 24 bits are 1
     #define BIT_MASK_TAPS 0x00001B // mask where only TAPS are one (24,22,21,20), big endian for cases like seed = 1
-    #define ARRAY_SIZE 16777215 // number of numbers to generate (16777215 is the biggest 24bit int)
+    #define ARRAY_SIZE 16777216 // number of numbers to generate (16777215 is the biggest 24bit int)
     #define N_CLASSES 16
     int const CLASS_SIZE = (BITS_24+1)/N_CLASSES;
     double const UNIFORM_FREQ =  (double)1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
@@ -137,11 +137,15 @@ int main(){
 
 // print generated numbers
     // printf("Printing Pseudo randoms generated with nasm function... \n");
-    //  for (int i = 0; i < ARRAY_SIZE; i++)
+    //  for (int i = 0; i < 5  ; i++)
     //  {
-    //     printf(" %i ", nasmPseudoRandom[i]);
+    //     printf(" %i \n", nasmPseudoRandom[i]);
     //  }
     // printf("Printed Pseudo randoms generated with nasm function. \n");
+    //  for (int i = ARRAY_SIZE - 5; i < ARRAY_SIZE ; i++)
+    //  {
+    //     printf(" %i \n", nasmPseudoRandom[i]);
+    //  }
 
     // printf("Printing Pseudo randoms generated with c function... \n");
     //  for (int i = 0; i < ARRAY_SIZE; i++)
@@ -150,21 +154,33 @@ int main(){
     //  }
     // printf("Printed Pseudo randoms generated with c function. \n");
 
+    printf("\nIs LFSR sequence maximal-length? \n");
 // // check if any nu,bers were repeated
-    // for (int i = 0; i < ARRAY_SIZE; i++)
-    // {
-    //     for (int j = 0; j < ARRAY_SIZE; j++)
-    //     {
-    //         if( i != j && nasmPseudoRandom[i] == nasmPseudoRandom[j]){
-    //              printf("Repeated number %i found in nasmPseudoRandom at indexes %i,  and %i", nasmPseudoRandom[j], i, j);
-    //              hasRepeated = 1;
-    //         }
-    //     }
+    for (int i = ARRAY_SIZE -1; i < ARRAY_SIZE; i++)
+    {
+        for (int j = 0; j < ARRAY_SIZE; j++)
+        {
+            if( i != j && nasmPseudoRandom[i] == nasmPseudoRandom[j]){
+                //  printf(" Repeated number %i found in nasmPseudoRandom at indexes %i,  and %i\n", nasmPseudoRandom[j], i, j);
+                 hasRepeated = 1;
+
+            }
+        }
         
-    // }
-    // if (hasRepeated == 0){
-    //     printf("No repeated numbers found in nasmPseudoRandom. \n");
-    // }
+    }
+
+    switch(hasRepeated)
+    {
+        case 0:
+            printf(" I don't Know: Seed was not repeated. IS ARRAY_SIZE set to under 2^24? \n");
+            break;
+        case 1:
+            printf(" YES! Seed was only repeated once\n");
+            break;
+        default:
+            printf(" NO! Seed was repeated over once \n");
+            break;
+    }
     
 
     return 0;
