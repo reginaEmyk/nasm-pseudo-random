@@ -128,8 +128,8 @@ int main(){
     printf("...Finished Chi Test\n\n");
 
    
-    printf("time taken by nasm: %ld clocks, %ld secs \n", clockNasm, clockNasm/CLOCKS_PER_SEC);
-    printf("time taken by c: %ld clocks, %ld secs \n", clockC, clockC/CLOCKS_PER_SEC);
+    printf("time taken by nasm: %ld clocks, %ld miliseconds \n", clockNasm, clockNasm*1000/CLOCKS_PER_SEC);
+    printf("time taken by c: %ld clocks, %ld miliseconds \n", clockC, clockC*1000/CLOCKS_PER_SEC);
     printf("c/nasm (clocks): %f  \n", (double)clockC/(double)clockNasm);
 
 // extra report functions 
