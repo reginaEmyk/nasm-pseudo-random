@@ -85,18 +85,17 @@ int main(){
     int areBothEqual = 0;
     int hasRepeated = 0;
     
-    clockNasm = clock();
     printf("Calling LFSR in nasm, SEED: %i ...", SEED);
+    clockNasm = clock();
     nasmPseudoRandom = lfsr(SEED);
-
-    printf("Finished\n");
     clockNasm = clock() - clockNasm;
-
-    clockC = clock();
-    printf("Calling LFSR in c, SEED: %i ...", SEED);
-    cPseudoRandom = lfsr_array(cPseudoRandom, SEED);
     printf("Finished\n");
+
+    printf("Calling LFSR in c, SEED: %i ...", SEED);
+    clockC = clock();
+    cPseudoRandom = lfsr_array(cPseudoRandom, SEED);
     clockC = clock() - clockC;
+    printf("Finished\n");
 
 // A test to see if 0 was generated, in which case the next number would be 0.
     for (int i = 0; i < ARRAY_SIZE; i++)
