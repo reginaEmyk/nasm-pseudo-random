@@ -8,25 +8,9 @@ section .data
     
 section .text
     global _lfsr 
-    global lfsr ; rename to start with underscore if not in linux, __lfsr
-    global get_polynomial
-    global loop_seed
+    global _get_polynomial
 
-   loop_seed:
-            RDTSC 
-            shr eax,8 ; 24 bits
-            cmp eax,0 ; seed 0 garantees 0 output so we'll avoid it
-            je loop_seed  
-            ret
-
-    ; get seed from current clock time
-    ; https://www.diva-portal.org/smash/get/diva2:812512/FULLTEXT01.pdf    
-    ; https://stackoverflow.com/questions/17182182/how-to-create-random-number-in-nasm-getting-system-time
-    call_loop_seed:
-        call loop_seed
-        jmp gen_lfsr
-
-    get_polynomial:
+    _get_polynomial:
         mov edx, eax; eax has lfsr seed ; 
         and edx, _BIT_MASK_TAPS ; 
         shr edx, 1 ; 24th bit: original 23rd bit
@@ -41,36 +25,29 @@ section .text
         ret
             
     _lfsr:
-    lfsr: ; _start is in stdlib with printf 
         push ebp
         mov  ebp, esp
         mov eax, [esp+8] ; previous stack + 4 for eax
         mov ecx, 0 ; to access array
         
-    cmp eax, 0
-    je call_loop_seed ; puts clock time in eax and jumps to gen_lfsr
-
-    gen_lfsr: 
+    _gen_lfsr: 
         push eax ; preserve lfsr in stack
 
    ; shifts lfsr in edx so 23rd bit is the bit to perform xor on the 23rd bit of lfsr in eax
-        call get_polynomial ; puts polynomial in eax, eax must have lfsr
+        call _get_polynomial ; puts polynomial in eax, eax must have lfsr
         pop edx ; restore lfsr
         shr edx, 1 ; shift lfsr by 1
-        or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in get_polynomial
+        or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in _get_polynomial
     ; lfsr = polynomial | lfsr << 1 , upper 8 bits are 0. polynomial must be 0 except in 24th bit
             mov [pseudo_randoms_ + ecx*4], edx ; push pseudo random number to array
         mov eax,edx; push lfsr in eax
         inc ecx ; increment counter
         cmp ecx, [ebp+12] ; loop until all 'array_size' amount of pseudo randoms are pushed to array
-        jl gen_lfsr ; todo jl or jle
+        jl _gen_lfsr ;
 
         ; AL, AX or DX:A
             lea eax, [pseudo_randoms_]
-        ; mov [esp+8], eax
         mov esp, ebp
         pop ebp ; restore stack to return to main
         
         ret
-
-; this was made for linux

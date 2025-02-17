@@ -1,11 +1,12 @@
 // to run
-// nasm -g -f elf32 lfsr.asm # compile for 32 bits arch
+// nasm -g -f elf32 lfsr.asm 
 // gcc -g -m32 main.c lfsr.o -o lfsr
 // ./lfsr 
-
+// taps must be even amount and setwise co-prime 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+    #define SEED 0
     #define STARTING_BIT 0x800000// only the last 24 bits are 
     #define LAST_BIT 0x000001//
     #define BITS_24 0xFFFFFF// only the last 24 bits are 1
@@ -18,7 +19,6 @@
 
     // get the critical value in this table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf
     double const CRITICAL_VALUE = 25.00; // for alpha = 0.05 and df = N_classes -1 = 15
-    #define SEED 1
 
 int get_polynomial_a(int lfsr){
     int bit;
@@ -34,7 +34,7 @@ int get_polynomial_a(int lfsr){
 
 int* lfsr_array(int* pseudoRandom, int lfsr);
 int* lfsr_array(int* pseudoRandom, int lfsr){
-    int polynomial = -1;
+    int polynomial;
 
     for (int i = 0; i < ARRAY_SIZE; i++){
         polynomial = get_polynomial_a(lfsr);
@@ -47,7 +47,12 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
  
 }
 
-int* lfsr(int,int);
+#ifdef WIN32
+    int lfsr(int lfsr, int n);
+#else
+    int _lfsr(int lfsr, int n);
+#endif
+
 
 // null hypothesis: it is uniform, numbers [0, 1M) are expected to be in 1st class
 double chiUniformExpected(int* pseudoRandom) {
@@ -80,6 +85,11 @@ double chiUniformExpected(int* pseudoRandom) {
 
 
 int main(){
+    if(SEED == 0){
+        printf("Seed is 0, pick another by altering `#DEFINE SEED` line on top of main.c . \n\tThis would cause every following number generated to be 0,as 0 xor 0 = 0\n");
+        return 0;
+    }
+
     int* nasmPseudoRandom = (int*)malloc(ARRAY_SIZE * sizeof(int));
     int* cPseudoRandom = (int*)malloc(ARRAY_SIZE * sizeof(int));
     clock_t clockNasm, clockC ;  // function execution takes less than a second, must use clock in ANSI C. https://stackoverflow.com/questions/361363/how-to-measure-time-in-milliseconds-using-ansi-c.
@@ -88,7 +98,12 @@ int main(){
     
     printf("Calling LFSR in nasm, SEED: %i ...", SEED);
     clockNasm = clock();
-    nasmPseudoRandom = lfsr(SEED,ARRAY_SIZE);
+    #ifdef _WIN32
+    nasmPseudoRandom = lfsr(SEED, ARRAY_SIZE);
+    #endif
+    #ifdef linux
+    nasmPseudoRandom = _lfsr(SEED, ARRAY_SIZE);
+    #endif
     clockNasm = clock() - clockNasm;
     printf("Finished\n");
 
@@ -101,8 +116,10 @@ int main(){
 // A test to see if 0 was generated, in which case the next number would be 0.
     for (int i = 0; i < ARRAY_SIZE; i++)
     {
-        if(cPseudoRandom[i] == 0)
+        if(cPseudoRandom[i] == 0){
             printf("ZERO WAS GENERATED! cPseudoRandom[%i] is 0 \n", i);
+            break;
+        }
     }
 
 // check if both implementations produced the same values in the same order
