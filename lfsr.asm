@@ -37,7 +37,7 @@ section .text
         call _get_polynomial ; puts polynomial in eax, eax must have lfsr
         pop edx ; restore lfsr
         shr edx, 1 ; shift lfsr by 1
-        or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is deont in _get_polynomial
+        or edx, eax ; pushes polynomial to leftmost of lfsr. Note: edx must have bits from 0-22 as 0. This is done in _get_polynomial
     ; lfsr = polynomial | lfsr << 1 , upper 8 bits are 0. polynomial must be 0 except in 24th bit
             mov [pseudo_randoms_ + ecx*4], edx ; push pseudo random number to array
         mov eax,edx; push lfsr in eax
@@ -45,8 +45,7 @@ section .text
         cmp ecx, [ebp+12] ; loop until all 'array_size' amount of pseudo randoms are pushed to array
         jl _gen_lfsr ;
 
-        ; AL, AX or DX:A
-            lea eax, [pseudo_randoms_]
+        lea eax, [pseudo_randoms_]
         mov esp, ebp
         pop ebp ; restore stack to return to main
         
