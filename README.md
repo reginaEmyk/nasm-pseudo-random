@@ -1,20 +1,15 @@
 # Rodar o programa (resposta da questão)
 ``` 
-nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
- gcc -g -m32 main.c fib_lfsr.o -o lfsr
- ./lfsr 
-```
-## OU
-``` 
-nasm -g -f elf32 fib_lfsr.asm # compile for 32 bits arch
- gcc -g -m32 main.c fib_lfsr.o -o lfsr
- ./lfsr 
+nasm -g -f elf32 lfsr.asm # compile for 32 bits arch
+gcc -g -m32 main.c lfsr.o -o lfsr
+./lfsr 
 ```
 ### OU 
 (mesmo comando acima)
 ```
 make && ./lfsr
 ```
+Para escolher o número de números a serem gerandos é preciso alterar o #define ARRAY_SIZE para o valor desejado. Até 16777216 é suportado
 
 ## Obeservações Windows
 Para compilar em windows é necessário o seu gcc ser capaz de compilar códigos de 32 bits, para isso recomenda-se usar o gcc instaldado dessa maneira:
