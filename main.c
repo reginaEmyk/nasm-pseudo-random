@@ -2,21 +2,17 @@
 // nasm -g -f elf32 lfsr.asm 
 // gcc -g -m32 main.c lfsr.o -o lfsr
 // ./lfsr 
-// taps must be even amount and setwise co-prime 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-    #define SEED 0
-    #define STARTING_BIT 0x800000// only the last 24 bits are 
+    #define SEED 1
     #define LAST_BIT 0x000001//
     #define BITS_24 0xFFFFFF// only the last 24 bits are 1
-    #define BIT_MASK_TAPS 0x00001B // mask where only TAPS are one (24,22,21,20), big endian for cases like seed = 1
+    #define BIT_MASK_TAPS 0x00001B // mask where only TAPS are one (24,22,21,20). TAPS must be even amount and setwise co-prime .
     #define ARRAY_SIZE 16777216 // number of numbers to generate (16777216 is maximum supported)
     #define N_CLASSES 16
     int const CLASS_SIZE = (BITS_24+1)/N_CLASSES;
-    double const UNIFORM_FREQ =  (double)1/CLASS_SIZE; // the frequency expected for an ocurrence in a class is 1/size of class, in uniform distribution 
-    double const ALMOST_ZERO_DENOMINATOR = 0.1;
-
     // get the critical value in this table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf
     double const CRITICAL_VALUE = 25.00; // for alpha = 0.05 and df = N_classes -1 = 15
 
@@ -54,7 +50,7 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
 #endif
 
 
-// null hypothesis: it is uniform, numbers [0, 1M) are expected to be in 1st class
+// null hypothesis: it is uniform distribution
 double chiUniformExpected(int* pseudoRandom) {
     printf("\nInitiating chi square test... \n");
     printf("\tThe hypoteshis: generated distribution is uniform\n");
@@ -63,7 +59,7 @@ double chiUniformExpected(int* pseudoRandom) {
 
     int* observationsPerClass = calloc(N_CLASSES,sizeof(int)); // 0 initialize at calloc
 
-    for (int i = 0; i < ARRAY_SIZE; i++) // iterate through each "random" number and associating it to a class
+    for (int i = 0; i < ARRAY_SIZE; i++) // iterate through each pseudorandom number and associating it to a class
     {
         observationsPerClass[pseudoRandom[i]/CLASS_SIZE]++;
     }
@@ -92,7 +88,7 @@ int main(){
 
     int* nasmPseudoRandom = (int*)malloc(ARRAY_SIZE * sizeof(int));
     int* cPseudoRandom = (int*)malloc(ARRAY_SIZE * sizeof(int));
-    clock_t clockNasm, clockC ;  // function execution takes less than a second, must use clock in ANSI C. https://stackoverflow.com/questions/361363/how-to-measure-time-in-milliseconds-using-ansi-c.
+    clock_t clockNasm, clockC ; 
     int areBothEqual = 0;
     int hasRepeated = 0;
     
@@ -113,34 +109,24 @@ int main(){
     clockC = clock() - clockC;
     printf("Finished\n");
 
-// A test to see if 0 was generated, in which case the next number would be 0.
-    for (int i = 0; i < ARRAY_SIZE; i++)
-    {
-        if(cPseudoRandom[i] == 0){
-            printf("ZERO WAS GENERATED! cPseudoRandom[%i] is 0 \n", i);
-            break;
-        }
-    }
-
 // check if both implementations produced the same values in the same order
-// both given same seed
     for (int i = 0; i < ARRAY_SIZE; i++)
     {
         if(nasmPseudoRandom[i] != cPseudoRandom[i]){
-            printf("Do both nasm and c implementations produce the same values?\n"" NO!  The LFSR differ!  index %i nasm is %i c is %i", i, nasmPseudoRandom[i], cPseudoRandom[i] );
+            printf("Do both nasm and c implementations produce the same values?\n""\tNO!  The LFSR differ!  index %i nasm is %i c is %i", i, nasmPseudoRandom[i], cPseudoRandom[i] );
             areBothEqual = 1;
             break;
         } 
     }
 
     if (areBothEqual == 0)
-        printf(" Do both nasm and c implementations produce the same values?\n"" YES! The implementations for c and nasm gave the same resulting array. \n");
+        printf("Do both nasm and c implementations produce the same values?\n""\tYES! The implementations for c and nasm gave the same resulting array. \n");
 
     double chiSquare = chiUniformExpected(cPseudoRandom);
     printf("\tchi_square %f \n", chiSquare);
 
     if(chiSquare > CRITICAL_VALUE)
-        printf("\tREJECTED hypothesis, chi-square: %f > %f (critical value)\n"" Numbers are NOT uniformly distributed. chi square > critical value for alpha = 0.05 and df 15\n"" (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
+        printf("\tREJECTED hypothesis, chi-square: %f > %f (critical value)\n""\tNumbers are NOT uniformly distributed. chi square > critical value for alpha = 0.05 and df 15\n"" (chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
     else
         printf("\tNot found enough evidence to reject the hypothesis, chi-square: %f <= %f (critical value)\n""\tNumbers are uniformly distributed. chi square <= critical value for alpha = 0.05 and df 15\n""\t(chi dist table https://people.smp.uq.edu.au/YoniNazarathy/stat_models_B_course_spring_07/distributions/chisqtab.pdf)\n", chiSquare, CRITICAL_VALUE);
     
@@ -181,20 +167,18 @@ int main(){
     
 
 // extra report functions 
-
-// print generated numbers
-    printf("Printing Pseudo randoms generated with nasm function... \n");
+    printf("5 first pseudorandoms generated.\n");
      for (int i = 0; i < 5  ; i++)
      {
-        printf(" %i \n", nasmPseudoRandom[i]);
+        printf("\t%i \n", nasmPseudoRandom[i]);
      }
-    printf("Printed Pseudo randoms generated with nasm function. \n");
+    printf("5 last pseudorandoms generated\n");
      for (int i = ARRAY_SIZE - 5; i < ARRAY_SIZE ; i++)
      {
-        printf(" %i \n", nasmPseudoRandom[i]);
+        printf("\t%i \n", nasmPseudoRandom[i]);
      }
 
-    // printf("Printing Pseudo randoms generated with c function... \n");
+    // printf("Printing all Pseudo randoms generated with c function... \n");
     //  for (int i = 0; i < ARRAY_SIZE; i++)
     //  {
     //     printf(" %i ", cPseudoRandom[i]);
@@ -202,7 +186,7 @@ int main(){
     // printf("Printed Pseudo randoms generated with c function. \n");
 
     printf("\nIs LFSR sequence maximal-length? \n");
-// // check if any nu,bers were repeated
+// // check if any numbers were repeated
     for (int i = ARRAY_SIZE -1; i < ARRAY_SIZE; i++)
     {
         for (int j = 0; j < ARRAY_SIZE; j++)
@@ -219,13 +203,13 @@ int main(){
     switch(hasRepeated)
     {
         case 0:
-            printf(" I don't Know: Seed was not repeated. IS ARRAY_SIZE set to under 2^24? \n");
+            printf("\tI don't Know: Seed was not repeated. IS ARRAY_SIZE set to under 2^24? \n");
             break;
         case 1:
-            printf(" YES! Seed was only repeated once\n");
+            printf("\tYES! Seed was only repeated once\n");
             break;
         default:
-            printf(" NO! Seed was repeated over once \n");
+            printf("\tNO! Seed was repeated over once \n");
             break;
     }
     
