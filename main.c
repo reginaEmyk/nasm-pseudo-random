@@ -50,7 +50,7 @@ int* lfsr_array(int* pseudoRandom, int lfsr){
 #ifdef _WIN32
     extern int* lfsr(int lfsr, int n);
 #else
-    extern int _lfsr(int lfsr, int n);
+    extern int* _lfsr(int lfsr, int n);
 #endif
 
 
