@@ -91,7 +91,9 @@ int main(){
     clock_t clockNasm, clockC ; 
     int areBothEqual = 0;
     int hasRepeated = 0;
-    
+
+    printf("Number of pseudo randoms to generate: %d\n", ARRAY_SIZE);
+
     printf("Calling LFSR in nasm, SEED: %i ...", SEED);
     clockNasm = clock();
     #ifdef _WIN32
@@ -108,6 +110,7 @@ int main(){
     cPseudoRandom = lfsr_array(cPseudoRandom, SEED);
     clockC = clock() - clockC;
     printf("Finished\n");
+    printf("\n");
 
 // check if both implementations produced the same values in the same order
     for (int i = 0; i < ARRAY_SIZE; i++)
@@ -153,9 +156,10 @@ int main(){
                 printf("\tError, the number %d was generated %d times\n", i, aparicoes[i]);
             }
             if (aparicoes[i] == 0) {
-                printf("\tError, the number %d was generated 0 vezes\n", i);
-                if (i == 0) {
-                    printf("\tThere is no problem, 0 is not supposed to be generated\n");
+                if (i != 0) {
+                    printf("\tError, the number %d was generated 0 times\n", i);
+                } else {
+                    printf("\tZero was generated 0 times, as espected\n");
                 }
             }
         }
